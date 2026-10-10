@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --theme-primary: #B45309;
+    --theme-primary-hover: #92400E;
+    --theme-primary-light: #FEF3C7;
+    --theme-bg-canvas: #FAFAF9;
+    --theme-bg-card: #FFFFFF;
+    --theme-bg-subtle: #F5F5F4;
+    --theme-border: #E7E5E4;
+    --theme-text-primary: #1C1917;
+    --theme-text-secondary: #78716C;
+  }
+
+  html {
+    background-color: var(--theme-bg-canvas, #FAFAF9);
+    color: var(--theme-text-primary, #1C1917);
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--theme-bg-canvas);
+    color: var(--theme-text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  html.dark {
+    color-scheme: dark;
+    background-color: var(--theme-bg-canvas, #0C0A09);
+    color: var(--theme-text-primary, #FAFAF9);
+  }
+
+  html.dark body {
+    background-color: var(--theme-bg-canvas, #0C0A09);
+    color: var(--theme-text-primary, #FAFAF9);
+  }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    background-color: #1C1917;
+    border-color: #44403C;
+    color: #FAFAF9;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #78716C;
+  }
+
+  /* Custom scrollbar for mobile tab strip */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Polished Selected Item Card Styles across Light & Dark themes */
+.item-card-selected {
+  border-color: #D97706 !important;
+  background-color: #FFFBEB !important;
+  border-left-width: 4px !important;
+  border-left-color: var(--theme-primary, #B45309) !important;
+  box-shadow: 0 1px 4px rgba(180, 83, 9, 0.12) !important;
+}
+
+html.dark .item-card-selected {
+  border-color: #F59E0B !important;
+  background-color: #24201D !important;
+  border-left-width: 4px !important;
+  border-left-color: #F59E0B !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.item-card-selected .item-title {
+  color: #1C1917;
+}
+
+html.dark .item-card-selected .item-title {
+  color: #FAFAF9 !important;
+}
+
+.item-card-selected .item-subtext {
+  color: #78716C;
+}
+
+html.dark .item-card-selected .item-subtext {
+  color: #D6D3D1 !important;
+}
+
+/* Selected button states */
+.btn-details-selected {
+  background-color: var(--theme-primary, #B45309);
+  color: #FFFFFF;
+}
+
+html.dark .btn-details-selected {
+  background-color: #F59E0B !important;
+  color: #1C1917 !important;
+  font-weight: 700 !important;
+}
+
