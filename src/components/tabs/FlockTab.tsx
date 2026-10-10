@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Search, Filter, Scale, ChevronRight, Edit3, Trash2, ArrowRightLeft, Calendar, Info, Heart, ArrowDown } from 'lucide-react';
+import { Plus, Search, Filter, Scale, ChevronRight, Edit3, Trash2, ArrowRightLeft, Calendar, Info, Heart, ArrowDown, QrCode, ShieldCheck } from 'lucide-react';
 import { Coop, Chicken, LifeStage, WeightRecord, EggLog } from '../../types/flock';
 import { CHICKEN_BREEDS } from '../../data/breeds';
 import { calculateAgeInWeeks, formatAgeFriendly, getLatestWeight } from '../../utils/analytics';
+import { calculateChickenAge } from '../../utils/flockCalculations';
 import { GrowthWeighInModal } from '../GrowthWeighInModal';
+import { ChickenQrModal } from '../ChickenQrModal';
 
 interface FlockTabProps {
   coops: Coop[];
@@ -30,8 +32,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
   const [selectedCoopFilter, setSelectedCoopFilter] = useState<string>('all');
   const [selectedBreedFilter, setSelectedBreedFilter] = useState<string>('all');
   const [selectedStageFilter, setSelectedStageFilter] = useState<string>('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [selectedChicken, setSelectedChicken] = useState<Chicken | null>(chickens[0] || null);
   const [isWeighInOpen, setIsWeighInOpen] = useState<boolean>(false);
+  const [qrChicken, setQrChicken] = useState<Chicken | null>(null);
   const [highlightDetails, setHighlightDetails] = useState<boolean>(false);
 
   const detailsSectionRef = useRef<HTMLDivElement>(null);
@@ -61,6 +65,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
     if (selectedCoopFilter !== 'all' && chicken.coopId !== selectedCoopFilter) return false;
     if (selectedBreedFilter !== 'all' && chicken.breedId !== selectedBreedFilter) return false;
     if (selectedStageFilter !== 'all' && chicken.lifeStage !== selectedStageFilter) return false;
+    if (selectedStatusFilter !== 'all') {
+      const birdStatus = chicken.status || 'active';
+      if (birdStatus !== selectedStatusFilter) return false;
+    }
     return true;
   });
 
@@ -151,19 +159,33 @@ export const FlockTab: React.FC<FlockTabProps> = ({
             <option value="molting">Molting</option>
             <option value="retired">Retired</option>
           </select>
+
+          {/* Status filter */}
+          <select
+            value={selectedStatusFilter}
+            onChange={e => setSelectedStatusFilter(e.target.value)}
+            className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium col-span-1 sm:col-span-2 lg:col-span-4"
+          >
+            <option value="all">All Flock Statuses</option>
+            <option value="active">Active Members Only</option>
+            <option value="deceased">Deceased</option>
+            <option value="sold">Sold</option>
+            <option value="rehomed">Rehomed</option>
+          </select>
         </div>
 
         <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 pt-1 border-t border-stone-100 dark:border-stone-800">
           <span>
             Showing <strong className="text-stone-900 dark:text-stone-100 font-mono">{filteredChickens.length}</strong> of {chickens.length} birds
           </span>
-          {(searchQuery || selectedCoopFilter !== 'all' || selectedBreedFilter !== 'all' || selectedStageFilter !== 'all') && (
+          {(searchQuery || selectedCoopFilter !== 'all' || selectedBreedFilter !== 'all' || selectedStageFilter !== 'all' || selectedStatusFilter !== 'all') && (
             <button
               onClick={() => {
                 setSearchQuery('');
                 setSelectedCoopFilter('all');
                 setSelectedBreedFilter('all');
                 setSelectedStageFilter('all');
+                setSelectedStatusFilter('all');
               }}
               className="text-amber-800 dark:text-amber-400 hover:underline font-semibold"
             >
@@ -185,9 +207,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
             filteredChickens.map(chicken => {
               const breed = breedMap.get(chicken.breedId);
               const coop = coopMap.get(chicken.coopId);
-              const ageWeeks = calculateAgeInWeeks(chicken.hatchDate);
+              const age = calculateChickenAge(chicken.hatchDate);
               const weight = getLatestWeight(chicken);
               const isSelected = activeBird?.id === chicken.id;
+              const isNotActive = chicken.status && chicken.status !== 'active';
 
               return (
                 <div
@@ -209,16 +232,21 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                       </div>
 
                       <div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 item-title">{chicken.name}</h3>
                           {chicken.legBandId && (
                             <span className="text-[10px] font-mono font-medium bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded-sm border border-stone-200/80 dark:border-stone-700">
                               {chicken.legBandId}
                             </span>
                           )}
+                          {isNotActive && (
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">
+                              {chicken.status}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-stone-600 dark:text-stone-400 font-medium item-subtext">
-                          {breed?.name || 'Heritage Bird'} · <span className="capitalize">{chicken.gender}</span>
+                          {breed?.name || 'Heritage Bird'} · <span className="capitalize">{chicken.gender}</span> · <span className="text-amber-800 dark:text-amber-400 font-semibold">{age.text}</span>
                         </p>
                       </div>
                     </div>
@@ -233,24 +261,40 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                       <strong className="text-stone-800 dark:text-stone-200 font-mono tabular-nums">{weight ? `${weight}g` : '—'}</strong>
                     </div>
 
-                    {/* Prominent Jump to Details Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectAndJump(chicken);
-                      }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
-                        isSelected
-                          ? 'bg-amber-700 dark:bg-amber-500 text-white dark:text-stone-950 font-bold shadow-xs'
-                          : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700'
-                      }`}
-                      title={`Jump to ${chicken.name}'s details dossier`}
-                    >
-                      <span>Details</span>
-                      <ArrowDown className="w-3.5 h-3.5 lg:hidden" />
-                      <ChevronRight className="w-3.5 h-3.5 hidden lg:inline" />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* QR Badge Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQrChicken(chicken);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 transition-colors"
+                        title={`View & Print ${chicken.name}'s QR Code Badge`}
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                        <span>QR</span>
+                      </button>
+
+                      {/* Prominent Jump to Details Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectAndJump(chicken);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+                          isSelected
+                            ? 'bg-amber-700 dark:bg-amber-500 text-white dark:text-stone-950 font-bold shadow-xs'
+                            : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700'
+                        }`}
+                        title={`Jump to ${chicken.name}'s details dossier`}
+                      >
+                        <span>Details</span>
+                        <ArrowDown className="w-3.5 h-3.5 lg:hidden" />
+                        <ChevronRight className="w-3.5 h-3.5 hidden lg:inline" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -290,6 +334,15 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    onClick={() => setQrChicken(activeBird)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-200/80 dark:border-stone-700 rounded-lg shadow-xs transition-colors"
+                    title="View and print QR ID Badge"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                    <span>QR Badge</span>
+                  </button>
+
                   <button
                     onClick={() => setIsWeighInOpen(true)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs transition-colors"
@@ -534,6 +587,17 @@ export const FlockTab: React.FC<FlockTabProps> = ({
           onClose={() => setIsWeighInOpen(false)}
           chicken={activeBird}
           onSaveWeight={onSaveWeight}
+        />
+      )}
+
+      {/* Chicken QR ID Badge Modal */}
+      {qrChicken && (
+        <ChickenQrModal
+          isOpen={!!qrChicken}
+          onClose={() => setQrChicken(null)}
+          chicken={qrChicken}
+          breed={breedMap.get(qrChicken.breedId)}
+          coop={coopMap.get(qrChicken.coopId)}
         />
       )}
     </div>

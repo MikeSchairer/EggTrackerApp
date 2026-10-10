@@ -460,10 +460,14 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
                           className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md px-2 py-1 text-xs text-stone-800 dark:text-stone-200"
                         >
                           <option value="clean_intact">Clean & Intact</option>
-                          <option value="dirty">Muddy / Dirty Nest</option>
-                          <option value="double_yolk">Double Yolk (Twin)</option>
+                          <option value="dirty">Dirty / Needs Wash</option>
                           <option value="hairline_crack">Hairline Crack</option>
-                          <option value="soft_shell">Soft / Rubber Shell</option>
+                          <option value="cracked">Cracked / Broken Shell</option>
+                          <option value="eaten">Eaten / Broken in Nest Box</option>
+                          <option value="incubated">Reserved for Incubation Hatch</option>
+                          <option value="sold">Sold / Gifted Carton</option>
+                          <option value="double_yolk">Double Yolk (Twin)</option>
+                          <option value="soft_shell">Soft / Shell-less (Calcium Deficit)</option>
                           <option value="misshapen">Misshapen / Ridged</option>
                         </select>
                       </div>

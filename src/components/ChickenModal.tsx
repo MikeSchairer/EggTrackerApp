@@ -39,6 +39,9 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
   const [hatchDate, setHatchDate] = useState<string>(editingChicken?.hatchDate || '2026-03-15');
   const [gender, setGender] = useState<'hen' | 'rooster'>(editingChicken?.gender || 'hen');
   const [lifeStage, setLifeStage] = useState<LifeStage>(editingChicken?.lifeStage || 'active_layer');
+  const [status, setStatus] = useState<Chicken['status']>(editingChicken?.status || 'active');
+  const [colorDescription, setColorDescription] = useState<string>(editingChicken?.colorDescription || '');
+  const [statusNotes, setStatusNotes] = useState<string>(editingChicken?.statusNotes || '');
   const [avatarColor, setAvatarColor] = useState<string>(editingChicken?.avatarColor || AVATAR_COLORS[0]);
   const [notes, setNotes] = useState<string>(editingChicken?.notes || '');
   const [initialWeight, setInitialWeight] = useState<string>('');
@@ -72,6 +75,9 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
       hatchDate,
       gender,
       lifeStage,
+      status,
+      colorDescription: colorDescription.trim() || undefined,
+      statusNotes: statusNotes.trim() || undefined,
       avatarColor,
       weightRecords,
       notes: notes.trim() || undefined,
@@ -214,6 +220,48 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
               </select>
             </div>
           </div>
+
+          {/* Bird Status & Feathering Color */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">Flock Status</label>
+              <select
+                value={status}
+                onChange={e => setStatus(e.target.value as any)}
+                className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden focus:border-amber-700 dark:focus:border-amber-500 focus:bg-white dark:focus:bg-stone-900 transition-colors"
+              >
+                <option value="active">Active Flock Member</option>
+                <option value="deceased">Deceased</option>
+                <option value="sold">Sold</option>
+                <option value="rehomed">Rehomed / Relocated</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">Color / Plumage Description</label>
+              <input
+                type="text"
+                value={colorDescription}
+                onChange={e => setColorDescription(e.target.value)}
+                placeholder="e.g. Silver laced, white bouffant crest"
+                className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden focus:border-amber-700 dark:focus:border-amber-500 focus:bg-white dark:focus:bg-stone-900 transition-colors"
+              />
+            </div>
+          </div>
+
+          {status !== 'active' && (
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                Status Notes ({status})
+              </label>
+              <input
+                type="text"
+                value={statusNotes}
+                onChange={e => setStatusNotes(e.target.value)}
+                placeholder={`e.g. ${status === 'deceased' ? 'Passed away of old age peacefully' : 'Transferred to neighbor coop'}`}
+                className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden"
+              />
+            </div>
+          )}
 
           {/* Initial weight for new bird */}
           {!editingChicken && (

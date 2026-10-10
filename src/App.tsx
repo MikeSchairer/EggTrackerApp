@@ -1,21 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { DashboardTab } from './components/tabs/DashboardTab';
 import { EggsTab } from './components/tabs/EggsTab';
 import { FlockTab } from './components/tabs/FlockTab';
 import { CoopsTab } from './components/tabs/CoopsTab';
+import { FeedInventoryTab } from './components/tabs/FeedInventoryTab';
+import { IncubationTab } from './components/tabs/IncubationTab';
+import { HealthTab } from './components/tabs/HealthTab';
+import { FinancesTab } from './components/tabs/FinancesTab';
 import { BreedsTab } from './components/tabs/BreedsTab';
 import { AnalyticsTab } from './components/tabs/AnalyticsTab';
+
 import { EggLoggerModal } from './components/EggLoggerModal';
 import { ChickenModal } from './components/ChickenModal';
 import { CoopModal } from './components/CoopModal';
 import { PrintReportModal } from './components/PrintReportModal';
 import { ThemeModal } from './components/ThemeModal';
+import { LoginModal } from './components/LoginModal';
+
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { loadFlockState, saveFlockState, resetToSampleData, exportBackupJson } from './utils/storage';
-import { FlockState, Chicken, Coop, EggLog, WeightRecord } from './types/flock';
+import { fetchUserFlockData, saveUserFlockData } from './services/flockSyncService';
+import { 
+  FlockState, 
+  Chicken, 
+  Coop, 
+  EggLog, 
+  WeightRecord, 
+  FeedItem, 
+  EggBatch, 
+  IncubationBatch, 
+  HealthRecord, 
+  FinancialTransaction, 
+  PredatorIncident, 
+  SecurityChecklist, 
+  CoopEnvironmentLog, 
+  CoopMaintenanceItem 
+} from './types/flock';
 
 function FlockAppContent() {
+  const { user } = useAuth();
   const [state, setState] = useState<FlockState>(() => loadFlockState());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
@@ -27,11 +52,56 @@ function FlockAppContent() {
   const [editingCoop, setEditingCoop] = useState<Coop | null>(null);
   const [isPrintReportOpen, setIsPrintReportOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
 
-  // Sync state to local storage on change
+  // Cloud sync flag
+  const isCloudLoadedRef = useRef<boolean>(false);
+
+  // When user logs in or changes, sync with their private Firestore record
+  useEffect(() => {
+    if (!user) {
+      isCloudLoadedRef.current = false;
+      return;
+    }
+
+    let isMounted = true;
+    async function syncUserData() {
+      if (!user) return;
+      try {
+        const cloudData = await fetchUserFlockData(user.uid);
+        if (isMounted) {
+          if (cloudData && cloudData.chickens && cloudData.chickens.length > 0) {
+            setState(cloudData);
+            isCloudLoadedRef.current = true;
+          } else {
+            // New user account: seed their cloud record with current homestead data
+            await saveUserFlockData(user.uid, state);
+            isCloudLoadedRef.current = true;
+          }
+        }
+      } catch (err) {
+        console.warn('Initial cloud sync error:', err);
+      }
+    }
+
+    syncUserData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  // Sync state to local storage and Firestore if authenticated
   useEffect(() => {
     saveFlockState(state);
-  }, [state]);
+
+    if (user && isCloudLoadedRef.current) {
+      const timeout = setTimeout(() => {
+        saveUserFlockData(user.uid, state).catch(console.error);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [state, user]);
 
   // Handlers for Eggs
   const handleSaveEggLog = (log: EggLog) => {
@@ -46,6 +116,19 @@ function FlockAppContent() {
       ...prev,
       eggLogs: prev.eggLogs.filter(l => l.id !== logId),
     }));
+  };
+
+  const handleSaveEggBatch = (batch: EggBatch) => {
+    setState(prev => {
+      const existing = prev.eggBatches || [];
+      const index = existing.findIndex(b => b.id === batch.id);
+      return {
+        ...prev,
+        eggBatches: index >= 0
+          ? existing.map(b => (b.id === batch.id ? batch : b))
+          : [batch, ...existing],
+      };
+    });
   };
 
   // Handlers for Chickens
@@ -133,17 +216,139 @@ function FlockAppContent() {
   };
 
   const handleCleanCoop = (coopId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
     setState(prev => ({
       ...prev,
-      coops: prev.coops.map(c => (c.id === coopId ? { ...c, lastCleanedDate: '2026-10-09' } : c)),
+      coops: prev.coops.map(c => (c.id === coopId ? { ...c, lastCleanedDate: todayStr } : c)),
+    }));
+  };
+
+  const handleSaveEnvLog = (log: CoopEnvironmentLog) => {
+    setState(prev => ({
+      ...prev,
+      coopEnvironmentLogs: [log, ...(prev.coopEnvironmentLogs || [])],
+    }));
+  };
+
+  const handleToggleMaintenance = (taskId: string) => {
+    setState(prev => ({
+      ...prev,
+      coopMaintenanceItems: (prev.coopMaintenanceItems || []).map(m =>
+        m.id === taskId ? { ...m, completed: !m.completed } : m
+      ),
+    }));
+  };
+
+  const handleSaveMaintenanceTask = (task: CoopMaintenanceItem) => {
+    setState(prev => ({
+      ...prev,
+      coopMaintenanceItems: [task, ...(prev.coopMaintenanceItems || [])],
+    }));
+  };
+
+  // Handlers for Feed Inventory
+  const handleSaveFeedItem = (item: FeedItem) => {
+    setState(prev => {
+      const existing = prev.feedInventory || [];
+      const index = existing.findIndex(f => f.id === item.id);
+      return {
+        ...prev,
+        feedInventory: index >= 0
+          ? existing.map(f => (f.id === item.id ? item : f))
+          : [item, ...existing],
+      };
+    });
+  };
+
+  const handleDeleteFeedItem = (itemId: string) => {
+    setState(prev => ({
+      ...prev,
+      feedInventory: (prev.feedInventory || []).filter(f => f.id !== itemId),
+    }));
+  };
+
+  // Handlers for Incubation
+  const handleSaveIncubationBatch = (batch: IncubationBatch) => {
+    setState(prev => {
+      const existing = prev.incubationBatches || [];
+      const index = existing.findIndex(b => b.id === batch.id);
+      return {
+        ...prev,
+        incubationBatches: index >= 0
+          ? existing.map(b => (b.id === batch.id ? batch : b))
+          : [batch, ...existing],
+      };
+    });
+  };
+
+  const handleDeleteIncubationBatch = (batchId: string) => {
+    setState(prev => ({
+      ...prev,
+      incubationBatches: (prev.incubationBatches || []).filter(b => b.id !== batchId),
+    }));
+  };
+
+  // Handlers for Health & Security
+  const handleSaveHealthRecord = (record: HealthRecord) => {
+    setState(prev => ({
+      ...prev,
+      healthRecords: [record, ...(prev.healthRecords || [])],
+    }));
+  };
+
+  const handleSavePredatorIncident = (incident: PredatorIncident) => {
+    setState(prev => ({
+      ...prev,
+      predatorIncidents: [incident, ...(prev.predatorIncidents || [])],
+    }));
+  };
+
+  const handleSaveSecurityChecklist = (checklist: SecurityChecklist) => {
+    setState(prev => {
+      const existing = prev.securityChecklists || [];
+      const index = existing.findIndex(c => c.date === checklist.date);
+      return {
+        ...prev,
+        securityChecklists: index >= 0
+          ? existing.map(c => (c.date === checklist.date ? checklist : c))
+          : [checklist, ...existing],
+      };
+    });
+  };
+
+  // Handlers for Finances
+  const handleSaveTransaction = (tx: FinancialTransaction) => {
+    setState(prev => ({
+      ...prev,
+      transactions: [tx, ...(prev.transactions || [])],
+    }));
+  };
+
+  const handleDeleteTransaction = (txId: string) => {
+    setState(prev => ({
+      ...prev,
+      transactions: (prev.transactions || []).filter(t => t.id !== txId),
+    }));
+  };
+
+  // Handlers for Smart Reminders
+  const handleToggleReminder = (reminderId: string) => {
+    setState(prev => ({
+      ...prev,
+      reminders: (prev.reminders || []).map(r =>
+        r.id === reminderId ? { ...r, completed: !r.completed } : r
+      ),
     }));
   };
 
   // Reset to Sample Data
   const handleResetData = () => {
-    if (window.confirm('Reset all flock and egg data to the default sample dataset?')) {
+    if (window.confirm('Reset all homestead flock and egg data to the default sample dataset?')) {
       const fresh = resetToSampleData();
       setState(fresh);
+      if (user) {
+        saveUserFlockData(user.uid, fresh).catch(console.error);
+      }
     }
   };
 
@@ -158,6 +363,7 @@ function FlockAppContent() {
         onResetData={handleResetData}
         onExportBackup={() => exportBackupJson(state)}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        onOpenLoginModal={() => setIsLoginModalOpen(true)}
       />
 
       {/* Main Workspace Canvas */}
@@ -167,10 +373,15 @@ function FlockAppContent() {
             coops={state.coops}
             chickens={state.chickens}
             eggLogs={state.eggLogs}
+            feedInventory={state.feedInventory || []}
+            healthRecords={state.healthRecords || []}
+            reminders={state.reminders || []}
+            incubationBatches={state.incubationBatches || []}
             onOpenLogEggs={() => setIsLogEggsOpen(true)}
             onOpenAddChicken={handleOpenAddChicken}
             onSelectCoop={(coopId) => setState(prev => ({ ...prev, selectedCoopId: coopId }))}
             onNavigateToTab={setActiveTab}
+            onToggleReminder={handleToggleReminder}
           />
         )}
 
@@ -179,8 +390,10 @@ function FlockAppContent() {
             coops={state.coops}
             chickens={state.chickens}
             eggLogs={state.eggLogs}
+            eggBatches={state.eggBatches || []}
             onOpenLogEggs={() => setIsLogEggsOpen(true)}
             onDeleteLog={handleDeleteEggLog}
+            onSaveEggBatch={handleSaveEggBatch}
           />
         )}
 
@@ -202,11 +415,54 @@ function FlockAppContent() {
             coops={state.coops}
             chickens={state.chickens}
             eggLogs={state.eggLogs}
+            coopEnvLogs={state.coopEnvironmentLogs || []}
+            coopMaintenanceItems={state.coopMaintenanceItems || []}
             onOpenAddCoop={handleOpenAddCoop}
             onEditCoop={handleEditCoop}
             onDeleteCoop={handleDeleteCoop}
             onTransferChicken={handleTransferChicken}
             onCleanCoop={handleCleanCoop}
+            onSaveEnvLog={handleSaveEnvLog}
+            onToggleMaintenance={handleToggleMaintenance}
+            onSaveMaintenanceTask={handleSaveMaintenanceTask}
+          />
+        )}
+
+        {activeTab === 'feed' && (
+          <FeedInventoryTab
+            feedItems={state.feedInventory || []}
+            chickens={state.chickens}
+            eggLogs={state.eggLogs}
+            onSaveFeedItem={handleSaveFeedItem}
+            onDeleteFeedItem={handleDeleteFeedItem}
+          />
+        )}
+
+        {activeTab === 'incubation' && (
+          <IncubationTab
+            batches={state.incubationBatches || []}
+            onSaveBatch={handleSaveIncubationBatch}
+          />
+        )}
+
+        {activeTab === 'health' && (
+          <HealthTab
+            healthRecords={state.healthRecords || []}
+            chickens={state.chickens}
+            predatorIncidents={state.predatorIncidents || []}
+            securityChecklists={state.securityChecklists || []}
+            onSaveHealthRecord={handleSaveHealthRecord}
+            onSavePredatorIncident={handleSavePredatorIncident}
+            onSaveSecurityChecklist={handleSaveSecurityChecklist}
+          />
+        )}
+
+        {activeTab === 'finances' && (
+          <FinancesTab
+            transactions={state.transactions || []}
+            eggLogs={state.eggLogs}
+            onSaveTransaction={handleSaveTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
           />
         )}
 
@@ -231,12 +487,12 @@ function FlockAppContent() {
       <footer className="border-t border-stone-200 dark:border-stone-800 bg-white/70 dark:bg-stone-900/70 py-6 text-stone-500 dark:text-stone-400 text-xs transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-stone-700 dark:text-stone-200">Cluck & Clutch</span>
+            <span className="font-semibold text-stone-700 dark:text-stone-200">Flocker</span>
             <span>·</span>
             <span>Homestead Poultry & Egg Production Management</span>
           </div>
           <div className="flex items-center gap-4 text-stone-400 dark:text-stone-500">
-            <span>Offline-Ready Local Storage</span>
+            <span>{user ? `Cloud Protected (${user.email})` : 'Offline / Guest Mode'}</span>
             <span>·</span>
             <span>CSV & JSON Export Supported</span>
           </div>
@@ -296,15 +552,23 @@ function FlockAppContent() {
           onClose={() => setIsThemeModalOpen(false)}
         />
       )}
+
+      {isLoginModalOpen && (
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <FlockAppContent />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <FlockAppContent />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
-

@@ -1,5 +1,19 @@
 import { Coop, Chicken, EggLog, FlockState } from '../types/flock';
-import { INITIAL_COOPS, INITIAL_CHICKENS, generateInitialEggLogs } from '../data/initialData';
+import { 
+  INITIAL_COOPS, 
+  INITIAL_CHICKENS, 
+  generateInitialEggLogs,
+  INITIAL_FEED_INVENTORY,
+  INITIAL_EGG_BATCHES,
+  INITIAL_INCUBATION_BATCHES,
+  INITIAL_HEALTH_RECORDS,
+  INITIAL_TRANSACTIONS,
+  INITIAL_PREDATOR_INCIDENTS,
+  INITIAL_SECURITY_CHECKLISTS,
+  INITIAL_REMINDERS,
+  INITIAL_COOP_ENV_LOGS,
+  INITIAL_COOP_MAINTENANCE
+} from '../data/initialData';
 
 const STORAGE_KEY = 'cluck_and_clutch_data_v1';
 
@@ -14,6 +28,16 @@ export function loadFlockState(): FlockState {
           chickens: parsed.chickens,
           eggLogs: parsed.eggLogs,
           selectedCoopId: parsed.selectedCoopId || 'all',
+          feedInventory: Array.isArray(parsed.feedInventory) ? parsed.feedInventory : INITIAL_FEED_INVENTORY,
+          eggBatches: Array.isArray(parsed.eggBatches) ? parsed.eggBatches : INITIAL_EGG_BATCHES,
+          incubationBatches: Array.isArray(parsed.incubationBatches) ? parsed.incubationBatches : INITIAL_INCUBATION_BATCHES,
+          healthRecords: Array.isArray(parsed.healthRecords) ? parsed.healthRecords : INITIAL_HEALTH_RECORDS,
+          transactions: Array.isArray(parsed.transactions) ? parsed.transactions : INITIAL_TRANSACTIONS,
+          predatorIncidents: Array.isArray(parsed.predatorIncidents) ? parsed.predatorIncidents : INITIAL_PREDATOR_INCIDENTS,
+          securityChecklists: Array.isArray(parsed.securityChecklists) ? parsed.securityChecklists : INITIAL_SECURITY_CHECKLISTS,
+          reminders: Array.isArray(parsed.reminders) ? parsed.reminders : INITIAL_REMINDERS,
+          coopEnvironmentLogs: Array.isArray(parsed.coopEnvironmentLogs) ? parsed.coopEnvironmentLogs : INITIAL_COOP_ENV_LOGS,
+          coopMaintenanceItems: Array.isArray(parsed.coopMaintenanceItems) ? parsed.coopMaintenanceItems : INITIAL_COOP_MAINTENANCE,
         };
       }
     }
@@ -27,6 +51,16 @@ export function loadFlockState(): FlockState {
     chickens: INITIAL_CHICKENS,
     eggLogs: generateInitialEggLogs(),
     selectedCoopId: 'all',
+    feedInventory: INITIAL_FEED_INVENTORY,
+    eggBatches: INITIAL_EGG_BATCHES,
+    incubationBatches: INITIAL_INCUBATION_BATCHES,
+    healthRecords: INITIAL_HEALTH_RECORDS,
+    transactions: INITIAL_TRANSACTIONS,
+    predatorIncidents: INITIAL_PREDATOR_INCIDENTS,
+    securityChecklists: INITIAL_SECURITY_CHECKLISTS,
+    reminders: INITIAL_REMINDERS,
+    coopEnvironmentLogs: INITIAL_COOP_ENV_LOGS,
+    coopMaintenanceItems: INITIAL_COOP_MAINTENANCE,
   };
   saveFlockState(state);
   return state;
@@ -46,6 +80,16 @@ export function resetToSampleData(): FlockState {
     chickens: INITIAL_CHICKENS,
     eggLogs: generateInitialEggLogs(),
     selectedCoopId: 'all',
+    feedInventory: INITIAL_FEED_INVENTORY,
+    eggBatches: INITIAL_EGG_BATCHES,
+    incubationBatches: INITIAL_INCUBATION_BATCHES,
+    healthRecords: INITIAL_HEALTH_RECORDS,
+    transactions: INITIAL_TRANSACTIONS,
+    predatorIncidents: INITIAL_PREDATOR_INCIDENTS,
+    securityChecklists: INITIAL_SECURITY_CHECKLISTS,
+    reminders: INITIAL_REMINDERS,
+    coopEnvironmentLogs: INITIAL_COOP_ENV_LOGS,
+    coopMaintenanceItems: INITIAL_COOP_MAINTENANCE,
   };
   saveFlockState(freshState);
   return freshState;
