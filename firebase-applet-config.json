@@ -1,12 +1,12 @@
 {
-  "projectId": "adept-transformer-s2sm5",
-  "appId": "1:685227848111:web:0a5ee29ca0c905af06bf5a",
-  "apiKey": "AIzaSyBU-95NZ0oUjTwqbN5IzbOopxXFJPDboFc",
-  "authDomain": "adept-transformer-s2sm5.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-b062230c-704e-4e1f-8fa0-faf1a0bdc57a",
-  "storageBucket": "adept-transformer-s2sm5.firebasestorage.app",
-  "messagingSenderId": "685227848111",
+  "projectId": "",
+  "appId": "",
+  "apiKey": "",
+  "authDomain": "",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "",
+  "messagingSenderId": "",
   "measurementId": "",
-  "oAuthClientId": "685227848111-lv5mkcpgrkltn4k4pc8gpqgbe76lktvb.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }
