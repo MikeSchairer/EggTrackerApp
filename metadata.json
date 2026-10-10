@@ -1,5 +1,5 @@
 {
-  "name": "Cluck & Clutch - Flock & Egg Tracker",
+  "name": "Flocker",
   "description": "Comprehensive poultry management application for monitoring daily egg production, chicken growth metrics, multi-coop tracking, breed standards, and flock analytics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

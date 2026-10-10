@@ -53,7 +53,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
-            onClick={() => exportEggsCsv(eggLogs, chickens, coops)}
+            onClick={() => exportEggsCsv(eggLogs, coops)}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-700 bg-white border border-stone-200 hover:bg-stone-50 rounded-lg shadow-xs transition-colors"
           >
             <Download className="w-3.5 h-3.5" />

@@ -23,15 +23,15 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [date, setDate] = useState<string>('2026-10-09');
-  const [time, setTime] = useState<string>('08:30');
-  const [coopId, setCoopId] = useState<string>(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || '');
+  const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState<string>(() => new Date().toTimeString().slice(0, 5));
+  const [coopId, setCoopId] = useState<string>(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop');
   const [weather, setWeather] = useState<'Sunny' | 'Partly Cloudy' | 'Rainy' | 'Cold Snap' | 'Heatwave'>('Sunny');
   const [notes, setNotes] = useState<string>('');
-  const [mode, setMode] = useState<'individual' | 'quick'>('individual');
+  const [mode, setMode] = useState<'individual' | 'quick'>('quick');
 
   // Quick mode count
-  const [quickCount, setQuickCount] = useState<number>(4);
+  const [quickCount, setQuickCount] = useState<number>(1);
   const [quickBroken, setQuickBroken] = useState<number>(0);
 
   // Individual egg items
@@ -46,24 +46,6 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
       weightGrams: 55,
       condition: 'clean_intact',
       chickenId: coopHens[0]?.id || '',
-    },
-    {
-      id: `egg-${Date.now()}-2`,
-      size: 'large',
-      color: 'sky_blue',
-      shape: 'classic_oval',
-      weightGrams: 52,
-      condition: 'clean_intact',
-      chickenId: coopHens[1]?.id || '',
-    },
-    {
-      id: `egg-${Date.now()}-3`,
-      size: 'medium',
-      color: 'olive_green',
-      shape: 'pointed',
-      weightGrams: 49,
-      condition: 'clean_intact',
-      chickenId: coopHens[2]?.id || '',
     },
   ]);
 
@@ -214,11 +196,15 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
                 required
                 className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden focus:border-amber-700 transition-colors"
               >
-                {coops.map(coop => (
-                  <option key={coop.id} value={coop.id}>
-                    {coop.name}
-                  </option>
-                ))}
+                {coops.length === 0 ? (
+                  <option value="main-coop">Main Coop (Default)</option>
+                ) : (
+                  coops.map(coop => (
+                    <option key={coop.id} value={coop.id}>
+                      {coop.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>

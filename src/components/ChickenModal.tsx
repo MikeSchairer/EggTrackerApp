@@ -35,7 +35,7 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
   const [legBandId, setLegBandId] = useState<string>(editingChicken?.legBandId || '');
   const [bandColor, setBandColor] = useState<string>(editingChicken?.bandColor || 'Yellow');
   const [breedId, setBreedId] = useState<string>(editingChicken?.breedId || CHICKEN_BREEDS[0].id);
-  const [coopId, setCoopId] = useState<string>(editingChicken?.coopId || coops[0]?.id || '');
+  const [coopId, setCoopId] = useState<string>(editingChicken?.coopId || coops[0]?.id || 'main-coop');
   const [hatchDate, setHatchDate] = useState<string>(editingChicken?.hatchDate || '2026-03-15');
   const [gender, setGender] = useState<'hen' | 'rooster'>(editingChicken?.gender || 'hen');
   const [lifeStage, setLifeStage] = useState<LifeStage>(editingChicken?.lifeStage || 'active_layer');
@@ -173,9 +173,13 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
                 onChange={e => setCoopId(e.target.value)}
                 className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden focus:border-amber-700 dark:focus:border-amber-500 focus:bg-white dark:focus:bg-stone-900 transition-colors"
               >
-                {coops.map(coop => (
-                  <option key={coop.id} value={coop.id}>{coop.name}</option>
-                ))}
+                {coops.length === 0 ? (
+                  <option value="main-coop">Main Coop (Default)</option>
+                ) : (
+                  coops.map(coop => (
+                    <option key={coop.id} value={coop.id}>{coop.name}</option>
+                  ))
+                )}
               </select>
             </div>
             <div>

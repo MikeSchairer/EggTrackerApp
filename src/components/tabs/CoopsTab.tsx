@@ -184,67 +184,89 @@ export const CoopsTab: React.FC<CoopsTabProps> = ({
       </div>
 
       {/* Coop Selector Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {coops.map(coop => {
-          const birdCount = chickens.filter(c => c.coopId === coop.id).length;
-          const percent = coop.capacity > 0 ? Math.round((birdCount / coop.capacity) * 100) : 0;
-          const isSelected = activeCoop?.id === coop.id;
-          const daysClean = getDaysSinceClean(coop.lastCleanedDate);
+      {coops.length === 0 ? (
+        <div className="p-8 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center mx-auto">
+            <Home className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">No Coops Registered Yet</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 max-w-md mx-auto mt-1">
+              Add your first coop to track capacity, nesting boxes, roost length, bedding hygiene, run space, and ventilation records.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenAddCoop}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Your First Coop</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {coops.map(coop => {
+            const birdCount = chickens.filter(c => c.coopId === coop.id).length;
+            const percent = coop.capacity > 0 ? Math.round((birdCount / coop.capacity) * 100) : 0;
+            const isSelected = activeCoop?.id === coop.id;
+            const daysClean = getDaysSinceClean(coop.lastCleanedDate);
 
-          return (
-            <div
-              key={coop.id}
-              onClick={() => setSelectedCoopId(coop.id)}
-              className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                isSelected
-                  ? 'border-amber-500 dark:border-amber-500 bg-amber-50/20 dark:bg-amber-950/20 ring-1 ring-amber-500/50'
-                  : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-xs"
-                    style={{ backgroundColor: coop.colorTheme }}
-                  >
-                    <Home className="w-4 h-4" />
+            return (
+              <div
+                key={coop.id}
+                onClick={() => setSelectedCoopId(coop.id)}
+                className={`p-5 rounded-2xl border cursor-pointer transition-all ${
+                  isSelected
+                    ? 'border-amber-500 dark:border-amber-500 bg-amber-50/20 dark:bg-amber-950/20 ring-1 ring-amber-500/50'
+                    : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-xs"
+                      style={{ backgroundColor: coop.colorTheme }}
+                    >
+                      <Home className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">{coop.name}</h3>
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate max-w-[150px]">{coop.locationDescription}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">{coop.name}</h3>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate max-w-[150px]">{coop.locationDescription}</p>
+
+                  <span className="font-mono text-xs font-bold text-stone-800 dark:text-stone-200 tabular-nums">
+                    {birdCount} / {coop.capacity}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-4 space-y-1.5">
+                  <div className="flex justify-between text-[11px] text-stone-500 dark:text-stone-400">
+                    <span>Occupancy</span>
+                    <span className="font-mono font-medium text-stone-800 dark:text-stone-200">{percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, percent)}%`,
+                        backgroundColor: percent > 90 ? '#DC2626' : coop.colorTheme,
+                      }}
+                    />
                   </div>
                 </div>
 
-                <span className="font-mono text-xs font-bold text-stone-800 dark:text-stone-200 tabular-nums">
-                  {birdCount} / {coop.capacity}
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div className="mt-4 space-y-1.5">
-                <div className="flex justify-between text-[11px] text-stone-500 dark:text-stone-400">
-                  <span>Occupancy</span>
-                  <span className="font-mono font-medium text-stone-800 dark:text-stone-200">{percent}%</span>
-                </div>
-                <div className="h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(100, percent)}%`,
-                      backgroundColor: percent > 90 ? '#DC2626' : coop.colorTheme,
-                    }}
-                  />
+                <div className="mt-3 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
+                  <span>Cleaned {daysClean === 0 ? 'today' : `${daysClean}d ago`}</span>
+                  <span>{coop.runSquareFeet ? `${coop.runSquareFeet} sq ft run` : `${coop.nestingBoxes} boxes`}</span>
                 </div>
               </div>
-
-              <div className="mt-3 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
-                <span>Cleaned {daysClean === 0 ? 'today' : `${daysClean}d ago`}</span>
-                <span>{coop.runSquareFeet ? `${coop.runSquareFeet} sq ft run` : `${coop.nestingBoxes} boxes`}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {activeCoop && (
         <div className="space-y-6">

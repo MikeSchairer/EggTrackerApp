@@ -265,8 +265,8 @@ export function calculateSeasonalLayingPredictions(
   const adjustedRate = baseRate * daylightFactor;
   const expectedDaily = layingActiveHens * adjustedRate;
 
-  const minDaily = Math.max(1, Math.floor(expectedDaily * 0.88));
-  const maxDaily = Math.max(minDaily + 1, Math.ceil(expectedDaily * 1.12));
+  const minDaily = layingActiveHens <= 0 ? 0 : Math.max(1, Math.floor(expectedDaily * 0.88));
+  const maxDaily = layingActiveHens <= 0 ? 0 : Math.max(minDaily + 1, Math.ceil(expectedDaily * 1.12));
 
   return {
     seasonName,

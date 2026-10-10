@@ -137,7 +137,7 @@ export const EggsTab: React.FC<EggsTabProps> = ({
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => exportEggsCsv(eggLogs, chickens, coops)}
+            onClick={() => exportEggsCsv(eggLogs, coops)}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-700 dark:text-stone-200 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-700/60 rounded-lg shadow-xs transition-colors"
           >
             <Download className="w-3.5 h-3.5" />

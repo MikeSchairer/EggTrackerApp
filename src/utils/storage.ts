@@ -15,29 +15,68 @@ import {
   INITIAL_COOP_MAINTENANCE
 } from '../data/initialData';
 
-const STORAGE_KEY = 'cluck_and_clutch_data_v1';
+const STORAGE_KEY = 'flocker_homestead_state_v2';
+const LEGACY_STORAGE_KEY = 'cluck_and_clutch_data_v1';
+
+export const EMPTY_FLOCK_STATE: FlockState = {
+  coops: [],
+  chickens: [],
+  eggLogs: [],
+  selectedCoopId: 'all',
+  feedInventory: [],
+  eggBatches: [],
+  incubationBatches: [],
+  healthRecords: [],
+  transactions: [],
+  predatorIncidents: [],
+  securityChecklists: [],
+  reminders: [],
+  coopEnvironmentLogs: [],
+  coopMaintenanceItems: [],
+};
 
 export function loadFlockState(): FlockState {
   try {
+    // Clear legacy example data if present
+    if (localStorage.getItem(LEGACY_STORAGE_KEY)) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // If stored data contains previous example chickens or demo coops, purge to clean slate
+      const hasDemoData = (
+        (Array.isArray(parsed.chickens) && parsed.chickens.some((c: any) => 
+          c.id === 'hen-pebble' || c.id === 'hen-dotty' || c.id === 'hen-winnie' ||
+          c.id === 'hen-ruby' || c.id === 'hen-celeste' || c.id === 'hen-maple' ||
+          c.id === 'hen-clover' || c.id === 'hen-opal' || c.id === 'hen-copper'
+        )) ||
+        (Array.isArray(parsed.coops) && parsed.coops.some((coop: any) => 
+          coop.id === 'coop-meadow' || coop.id === 'coop-heritage-barn' || coop.id === 'coop-pullet-nursery'
+        ))
+      );
+      if (hasDemoData) {
+        saveFlockState(EMPTY_FLOCK_STATE);
+        return { ...EMPTY_FLOCK_STATE };
+      }
+
       if (Array.isArray(parsed.coops) && Array.isArray(parsed.chickens) && Array.isArray(parsed.eggLogs)) {
         return {
           coops: parsed.coops,
           chickens: parsed.chickens,
           eggLogs: parsed.eggLogs,
           selectedCoopId: parsed.selectedCoopId || 'all',
-          feedInventory: Array.isArray(parsed.feedInventory) ? parsed.feedInventory : INITIAL_FEED_INVENTORY,
-          eggBatches: Array.isArray(parsed.eggBatches) ? parsed.eggBatches : INITIAL_EGG_BATCHES,
-          incubationBatches: Array.isArray(parsed.incubationBatches) ? parsed.incubationBatches : INITIAL_INCUBATION_BATCHES,
-          healthRecords: Array.isArray(parsed.healthRecords) ? parsed.healthRecords : INITIAL_HEALTH_RECORDS,
-          transactions: Array.isArray(parsed.transactions) ? parsed.transactions : INITIAL_TRANSACTIONS,
-          predatorIncidents: Array.isArray(parsed.predatorIncidents) ? parsed.predatorIncidents : INITIAL_PREDATOR_INCIDENTS,
-          securityChecklists: Array.isArray(parsed.securityChecklists) ? parsed.securityChecklists : INITIAL_SECURITY_CHECKLISTS,
-          reminders: Array.isArray(parsed.reminders) ? parsed.reminders : INITIAL_REMINDERS,
-          coopEnvironmentLogs: Array.isArray(parsed.coopEnvironmentLogs) ? parsed.coopEnvironmentLogs : INITIAL_COOP_ENV_LOGS,
-          coopMaintenanceItems: Array.isArray(parsed.coopMaintenanceItems) ? parsed.coopMaintenanceItems : INITIAL_COOP_MAINTENANCE,
+          feedInventory: Array.isArray(parsed.feedInventory) ? parsed.feedInventory : [],
+          eggBatches: Array.isArray(parsed.eggBatches) ? parsed.eggBatches : [],
+          incubationBatches: Array.isArray(parsed.incubationBatches) ? parsed.incubationBatches : [],
+          healthRecords: Array.isArray(parsed.healthRecords) ? parsed.healthRecords : [],
+          transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+          predatorIncidents: Array.isArray(parsed.predatorIncidents) ? parsed.predatorIncidents : [],
+          securityChecklists: Array.isArray(parsed.securityChecklists) ? parsed.securityChecklists : [],
+          reminders: Array.isArray(parsed.reminders) ? parsed.reminders : [],
+          coopEnvironmentLogs: Array.isArray(parsed.coopEnvironmentLogs) ? parsed.coopEnvironmentLogs : [],
+          coopMaintenanceItems: Array.isArray(parsed.coopMaintenanceItems) ? parsed.coopMaintenanceItems : [],
         };
       }
     }
@@ -45,25 +84,10 @@ export function loadFlockState(): FlockState {
     console.error('Failed to parse saved flock state from localStorage', err);
   }
 
-  // Fallback to fresh initial data
-  const state: FlockState = {
-    coops: INITIAL_COOPS,
-    chickens: INITIAL_CHICKENS,
-    eggLogs: generateInitialEggLogs(),
-    selectedCoopId: 'all',
-    feedInventory: INITIAL_FEED_INVENTORY,
-    eggBatches: INITIAL_EGG_BATCHES,
-    incubationBatches: INITIAL_INCUBATION_BATCHES,
-    healthRecords: INITIAL_HEALTH_RECORDS,
-    transactions: INITIAL_TRANSACTIONS,
-    predatorIncidents: INITIAL_PREDATOR_INCIDENTS,
-    securityChecklists: INITIAL_SECURITY_CHECKLISTS,
-    reminders: INITIAL_REMINDERS,
-    coopEnvironmentLogs: INITIAL_COOP_ENV_LOGS,
-    coopMaintenanceItems: INITIAL_COOP_MAINTENANCE,
-  };
-  saveFlockState(state);
-  return state;
+  // Default to clean empty state (no example data)
+  const emptyState: FlockState = { ...EMPTY_FLOCK_STATE };
+  saveFlockState(emptyState);
+  return emptyState;
 }
 
 export function saveFlockState(state: FlockState): void {
@@ -74,8 +98,14 @@ export function saveFlockState(state: FlockState): void {
   }
 }
 
+export function clearAllFlockData(): FlockState {
+  const empty = { ...EMPTY_FLOCK_STATE };
+  saveFlockState(empty);
+  return empty;
+}
+
 export function resetToSampleData(): FlockState {
-  const freshState: FlockState = {
+  const sampleState: FlockState = {
     coops: INITIAL_COOPS,
     chickens: INITIAL_CHICKENS,
     eggLogs: generateInitialEggLogs(),
@@ -91,69 +121,46 @@ export function resetToSampleData(): FlockState {
     coopEnvironmentLogs: INITIAL_COOP_ENV_LOGS,
     coopMaintenanceItems: INITIAL_COOP_MAINTENANCE,
   };
-  saveFlockState(freshState);
-  return freshState;
+  saveFlockState(sampleState);
+  return sampleState;
 }
 
 export function exportBackupJson(state: FlockState): void {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
   const downloadAnchor = document.createElement('a');
   downloadAnchor.setAttribute('href', dataStr);
-  downloadAnchor.setAttribute('download', `flock_records_backup_${new Date().toISOString().split('T')[0]}.json`);
+  downloadAnchor.setAttribute('download', `flocker-backup-${new Date().toISOString().split('T')[0]}.json`);
   document.body.appendChild(downloadAnchor);
   downloadAnchor.click();
   downloadAnchor.remove();
 }
 
-export function exportEggsCsv(eggLogs: EggLog[], chickens: Chicken[], coops: Coop[]): void {
+export function exportEggsCsv(eggLogs: EggLog[], coops: Coop[]): void {
   const coopMap = new Map(coops.map(c => [c.id, c.name]));
-  const chickenMap = new Map(chickens.map(c => [c.id, c.name]));
+  const headers = ['Log ID', 'Date', 'Time', 'Coop Name', 'Total Eggs', 'Broken Count', 'Weather', 'Egg Sizes', 'Egg Colors'];
+  
+  const rows = eggLogs.map(log => {
+    const coopName = coopMap.get(log.coopId) || 'Unknown Coop';
+    const sizes = log.eggs.map(e => e.size).join('; ');
+    const colors = log.eggs.map(e => e.color).join('; ');
 
-  const headers = ['Date', 'Time', 'Coop', 'Total_Eggs', 'Broken_Eggs', 'Egg_ID', 'Size', 'Color', 'Shape', 'Weight_Grams', 'Condition', 'Layer_Hen'];
-  const rows: string[] = [headers.join(',')];
-
-  eggLogs.forEach(log => {
-    const coopName = coopMap.get(log.coopId) || log.coopId;
-    if (log.eggs.length === 0) {
-      rows.push([
-        log.date,
-        log.time || '',
-        `"${coopName}"`,
-        log.totalEggs,
-        log.brokenCount,
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''
-      ].join(','));
-    } else {
-      log.eggs.forEach(egg => {
-        const henName = egg.chickenId ? (chickenMap.get(egg.chickenId) || egg.chickenId) : 'Unassigned';
-        rows.push([
-          log.date,
-          log.time || '',
-          `"${coopName}"`,
-          log.totalEggs,
-          log.brokenCount,
-          egg.id,
-          egg.size,
-          egg.color,
-          egg.shape,
-          egg.weightGrams || '',
-          egg.condition,
-          `"${henName}"`
-        ].join(','));
-      });
-    }
+    return [
+      log.id,
+      log.date,
+      log.time || '',
+      `"${coopName}"`,
+      log.totalEggs,
+      log.brokenCount,
+      log.weather || '',
+      `"${sizes}"`,
+      `"${colors}"`
+    ].join(',');
   });
 
-  const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
   const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute('href', csvContent);
-  downloadAnchor.setAttribute('download', `flock_egg_records_${new Date().toISOString().split('T')[0]}.csv`);
+  downloadAnchor.setAttribute('href', encodeURI(csvContent));
+  downloadAnchor.setAttribute('download', `flocker-eggs-${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(downloadAnchor);
   downloadAnchor.click();
   downloadAnchor.remove();

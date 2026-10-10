@@ -174,9 +174,9 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={onResetData}
-                title="Reset sample homestead data"
+                title="Clear all data to a clean slate"
                 className="p-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-                aria-label="Reset demo data"
+                aria-label="Clear data"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -365,7 +365,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Reset to Sample Flock Data</span>
+                  <span>Clear All Data (Fresh Slate)</span>
                 </button>
               </div>
             </div>

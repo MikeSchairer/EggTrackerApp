@@ -64,7 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithPopup(auth, provider);
     } catch (err: any) {
       console.error('Google Sign-In failed:', err);
-      setError(err?.message || 'Failed to authenticate with Google.');
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized domain') || err?.message?.includes('auth/unauthorized-domain')) {
+        setError('This domain is not authorized in Firebase Auth yet. In the Firebase Console (project adept-transformer-s2sm5), go to Authentication > Settings > Authorized domains and add "flocker-app.vercel.app".');
+      } else {
+        setError(err?.message || 'Failed to authenticate with Google.');
+      }
     }
   };
 

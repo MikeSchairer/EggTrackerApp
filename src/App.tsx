@@ -20,7 +20,7 @@ import { LoginModal } from './components/LoginModal';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { loadFlockState, saveFlockState, resetToSampleData, exportBackupJson } from './utils/storage';
+import { loadFlockState, saveFlockState, resetToSampleData, clearAllFlockData, exportBackupJson } from './utils/storage';
 import { fetchUserFlockData, saveUserFlockData } from './services/flockSyncService';
 import { 
   FlockState, 
@@ -70,11 +70,26 @@ function FlockAppContent() {
       try {
         const cloudData = await fetchUserFlockData(user.uid);
         if (isMounted) {
-          if (cloudData && cloudData.chickens && cloudData.chickens.length > 0) {
+          const hasDemoData = cloudData && (
+            (Array.isArray(cloudData.chickens) && cloudData.chickens.some((c: any) => 
+              c.id === 'hen-pebble' || c.id === 'hen-dotty' || c.id === 'hen-winnie' ||
+              c.id === 'hen-ruby' || c.id === 'hen-celeste' || c.id === 'hen-maple' ||
+              c.id === 'hen-clover' || c.id === 'hen-opal' || c.id === 'hen-copper'
+            )) ||
+            (Array.isArray(cloudData.coops) && cloudData.coops.some((coop: any) => 
+              coop.id === 'coop-meadow' || coop.id === 'coop-heritage-barn' || coop.id === 'coop-pullet-nursery'
+            ))
+          );
+          if (hasDemoData) {
+            const clean = loadFlockState();
+            await saveUserFlockData(user.uid, clean);
+            setState(clean);
+            isCloudLoadedRef.current = true;
+          } else if (cloudData && Array.isArray(cloudData.coops)) {
             setState(cloudData);
             isCloudLoadedRef.current = true;
           } else {
-            // New user account: seed their cloud record with current homestead data
+            // New user account: seed their cloud record with current clean state
             await saveUserFlockData(user.uid, state);
             isCloudLoadedRef.current = true;
           }
@@ -341,13 +356,13 @@ function FlockAppContent() {
     }));
   };
 
-  // Reset to Sample Data
+  // Clear all data to fresh slate
   const handleResetData = () => {
-    if (window.confirm('Reset all homestead flock and egg data to the default sample dataset?')) {
-      const fresh = resetToSampleData();
-      setState(fresh);
+    if (window.confirm('Clear all flock data to a fresh clean slate?')) {
+      const clean = clearAllFlockData();
+      setState(clean);
       if (user) {
-        saveUserFlockData(user.uid, fresh).catch(console.error);
+        saveUserFlockData(user.uid, clean).catch(console.error);
       }
     }
   };

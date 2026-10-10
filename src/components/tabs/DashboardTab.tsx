@@ -110,48 +110,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   const weatherAdvisory = getWeatherCareAdvisories(64);
 
   // Reminders list
-  const activeReminders = reminders.length > 0 ? reminders : [
-    {
-      id: 'rem-1',
-      title: 'Morning egg collection & nesting box refresh',
-      category: 'egg_collection' as const,
-      dueDate: todayDate,
-      priority: 'high' as const,
-      completed: false
-    },
-    {
-      id: 'rem-2',
-      title: 'Scrub & top-up outdoor gravity drinkers',
-      category: 'water_check' as const,
-      dueDate: todayDate,
-      priority: 'medium' as const,
-      completed: true
-    },
-    {
-      id: 'rem-3',
-      title: 'Bedding fluff & diatomaceous earth dusting in Meadow Coop',
-      category: 'bedding_change' as const,
-      dueDate: todayDate,
-      priority: 'medium' as const,
-      completed: false
-    },
-    {
-      id: 'rem-4',
-      title: 'Check Penelope (Polish) crest & eye clearance',
-      category: 'health_check' as const,
-      dueDate: todayDate,
-      priority: 'low' as const,
-      completed: false
-    },
-    {
-      id: 'rem-5',
-      title: 'Night predator lockdown: check automatic coop sliding doors',
-      category: 'coop_clean' as const,
-      dueDate: todayDate,
-      priority: 'urgent' as const,
-      completed: false
-    }
-  ];
+  const activeReminders = reminders;
 
   const handleCheckReminder = (id: string) => {
     if (onToggleReminder) {
@@ -190,8 +149,14 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-stone-200 leading-relaxed max-w-2xl">
-            Currently overseeing {chickens.length} birds across {coops.length} active coops with {summary.activeLayersCount} active laying hens.
-            Daily yield today is <span className="font-semibold text-amber-200">{todayEggCount || summary.todayEggCount} fresh eggs</span> at an estimated {summary.currentLayingRatePercent}% laying efficiency.
+            {chickens.length === 0 ? (
+              <>Welcome to Flocker! Get started by setting up your first coop, registering your birds, and logging daily egg production.</>
+            ) : (
+              <>
+                Currently overseeing {chickens.length} birds across {coops.length} active coops with {summary.activeLayersCount} active laying hens.
+                Daily yield today is <span className="font-semibold text-amber-200">{todayEggCount || summary.todayEggCount} fresh eggs</span> at an estimated {summary.currentLayingRatePercent}% laying efficiency.
+              </>
+            )}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -691,53 +656,59 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
             <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">Capacity, roost allocations & nesting boxes.</p>
 
-            <div className="space-y-3">
-              {coops.map((coop) => {
-                const coopBirds = chickens.filter(c => c.coopId === coop.id);
-                const percent = coop.capacity > 0 ? Math.round((coopBirds.length / coop.capacity) * 100) : 0;
+            {coops.length === 0 ? (
+              <div className="p-4 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200 dark:border-stone-700 text-center text-xs text-stone-500 dark:text-stone-400">
+                No coops added yet. Tap "Manage" to set up your first coop facility.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {coops.map((coop) => {
+                  const coopBirds = chickens.filter(c => c.coopId === coop.id);
+                  const percent = coop.capacity > 0 ? Math.round((coopBirds.length / coop.capacity) * 100) : 0;
 
-                return (
-                  <button
-                    key={coop.id}
-                    onClick={() => {
-                      onSelectCoop(coop.id);
-                      onNavigateToTab('coops');
-                    }}
-                    className="w-full text-left p-3 rounded-xl border border-stone-200 dark:border-stone-800 hover:border-amber-700/60 dark:hover:border-amber-500/60 hover:bg-stone-50/70 dark:hover:bg-stone-800/50 transition-all space-y-2 group cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: coop.colorTheme }}
-                        />
-                        <span className="text-xs font-bold text-stone-800 dark:text-stone-200 group-hover:text-stone-950 dark:group-hover:text-stone-50">
-                          {coop.name}
+                  return (
+                    <button
+                      key={coop.id}
+                      onClick={() => {
+                        onSelectCoop(coop.id);
+                        onNavigateToTab('coops');
+                      }}
+                      className="w-full text-left p-3 rounded-xl border border-stone-200 dark:border-stone-800 hover:border-amber-700/60 dark:hover:border-amber-500/60 hover:bg-stone-50/70 dark:hover:bg-stone-800/50 transition-all space-y-2 group cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: coop.colorTheme }}
+                          />
+                          <span className="text-xs font-bold text-stone-800 dark:text-stone-200 group-hover:text-stone-950 dark:group-hover:text-stone-50">
+                            {coop.name}
+                          </span>
+                        </div>
+                        <span className="text-xs font-mono font-semibold text-stone-600 dark:text-stone-400 tabular-nums">
+                          {coopBirds.length} / {coop.capacity} birds
                         </span>
                       </div>
-                      <span className="text-xs font-mono font-semibold text-stone-600 dark:text-stone-400 tabular-nums">
-                        {coopBirds.length} / {coop.capacity} birds
-                      </span>
-                    </div>
 
-                    <div className="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(100, percent)}%`,
-                          backgroundColor: percent > 90 ? '#DC2626' : coop.colorTheme,
-                        }}
-                      />
-                    </div>
+                      <div className="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, percent)}%`,
+                            backgroundColor: percent > 90 ? '#DC2626' : coop.colorTheme,
+                          }}
+                        />
+                      </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 pt-0.5">
-                      <span>{coop.nestingBoxes} nest boxes · {coop.beddingType}</span>
-                      <span className="font-mono">{percent}% full</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 pt-0.5">
+                        <span>{coop.nestingBoxes} nest boxes · {coop.beddingType}</span>
+                        <span className="font-mono">{percent}% full</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="pt-3 border-t border-stone-200 dark:border-stone-800">
@@ -767,45 +738,51 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
 
-          <div className="divide-y divide-stone-100 dark:divide-stone-800">
-            {recentLogs.map((log) => {
-              const coop = coopMap.get(log.coopId);
-              return (
-                <div key={log.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-amber-800 dark:text-amber-400">
-                      <Egg className="w-5 h-5 fill-amber-50 dark:fill-amber-950/40" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{coop?.name || 'Coop'}</span>
-                        <span className="text-xs text-stone-400">·</span>
-                        <span className="text-xs text-stone-500 dark:text-stone-400">{log.date} {log.time ? `(${log.time})` : ''}</span>
+          {recentLogs.length === 0 ? (
+            <div className="p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
+              No egg collections recorded yet. Tap "Log Today's Eggs" above to add your first log.
+            </div>
+          ) : (
+            <div className="divide-y divide-stone-100 dark:divide-stone-800">
+              {recentLogs.map((log) => {
+                const coop = coopMap.get(log.coopId);
+                return (
+                  <div key={log.id} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-amber-800 dark:text-amber-400">
+                        <Egg className="w-5 h-5 fill-amber-50 dark:fill-amber-950/40" />
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {log.eggs.slice(0, 5).map((egg) => (
-                          <EggVisual key={egg.id} color={egg.color} shape={egg.shape} size={egg.size} className="w-4 h-5" />
-                        ))}
-                        {log.eggs.length > 5 && (
-                          <span className="text-[10px] text-stone-400 font-mono">+{log.eggs.length - 5}</span>
-                        )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{coop?.name || 'Coop'}</span>
+                          <span className="text-xs text-stone-400">·</span>
+                          <span className="text-xs text-stone-500 dark:text-stone-400">{log.date} {log.time ? `(${log.time})` : ''}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {log.eggs.slice(0, 5).map((egg) => (
+                            <EggVisual key={egg.id} color={egg.color} shape={egg.shape} size={egg.size} className="w-4 h-5" />
+                          ))}
+                          {log.eggs.length > 5 && (
+                            <span className="text-[10px] text-stone-400 font-mono">+{log.eggs.length - 5}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="text-right">
-                    <span className="font-mono text-base font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                      {log.totalEggs}
-                    </span>
-                    <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
-                    {log.brokenCount > 0 && (
-                      <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
-                    )}
+                    <div className="text-right">
+                      <span className="font-mono text-base font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                        {log.totalEggs}
+                      </span>
+                      <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
+                      {log.brokenCount > 0 && (
+                        <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors">
@@ -822,48 +799,54 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
 
-          <div className="space-y-3">
-            {chickens
-              .filter(c => c.weightRecords && c.weightRecords.length > 0)
-              .slice(0, 4)
-              .map(chicken => {
-                const breed = CHICKEN_BREEDS.find(b => b.id === chicken.breedId);
-                const latestWeight = chicken.weightRecords[chicken.weightRecords.length - 1];
-                const prevWeight = chicken.weightRecords.length > 1 
-                  ? chicken.weightRecords[chicken.weightRecords.length - 2] 
-                  : null;
-                const gain = prevWeight ? latestWeight.weightGrams - prevWeight.weightGrams : 0;
+          {chickens.filter(c => c.weightRecords && c.weightRecords.length > 0).length === 0 ? (
+            <div className="p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
+              No weight records logged yet. Record bird weigh-ins in the Flock tab.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {chickens
+                .filter(c => c.weightRecords && c.weightRecords.length > 0)
+                .slice(0, 4)
+                .map(chicken => {
+                  const breed = CHICKEN_BREEDS.find(b => b.id === chicken.breedId);
+                  const latestWeight = chicken.weightRecords[chicken.weightRecords.length - 1];
+                  const prevWeight = chicken.weightRecords.length > 1 
+                    ? chicken.weightRecords[chicken.weightRecords.length - 2] 
+                    : null;
+                  const gain = prevWeight ? latestWeight.weightGrams - prevWeight.weightGrams : 0;
 
-                return (
-                  <div key={chicken.id} className="p-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chicken.avatarColor }} />
-                        <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
-                        <span className="text-xs text-stone-500 dark:text-stone-400">({breed?.name})</span>
-                      </div>
-                      <p className="text-[11px] text-stone-400 mt-0.5">
-                        {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                        {latestWeight.weightGrams}g
-                      </span>
-                      <span className="text-[11px] text-stone-500 dark:text-stone-400 ml-1">
-                        ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
-                      </span>
-                      {gain > 0 && (
-                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
-                          +{gain}g gained
+                  return (
+                    <div key={chicken.id} className="p-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chicken.avatarColor }} />
+                          <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
+                          <span className="text-xs text-stone-500 dark:text-stone-400">({breed?.name})</span>
+                        </div>
+                        <p className="text-[11px] text-stone-400 mt-0.5">
+                          {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
                         </p>
-                      )}
+                      </div>
+
+                      <div className="text-right">
+                        <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                          {latestWeight.weightGrams}g
+                        </span>
+                        <span className="text-[11px] text-stone-500 dark:text-stone-400 ml-1">
+                          ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
+                        </span>
+                        {gain > 0 && (
+                          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
+                            +{gain}g gained
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-          </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </div>
     </div>

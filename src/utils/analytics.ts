@@ -29,7 +29,7 @@ export function computeFlockSummary(
   targetDate: string = '2026-10-09'
 ): FlockSummaryMetrics {
   const activeLayers = chickens.filter(c => c.lifeStage === 'active_layer');
-  const activeLayersCount = Math.max(1, activeLayers.length);
+  const activeLayersCount = activeLayers.length;
   const totalFlockCount = chickens.length;
 
   let totalEggsAllTime = 0;
@@ -74,9 +74,13 @@ export function computeFlockSummary(
     eggsLast30Days += dLogs.reduce((sum, l) => sum + l.totalEggs, 0);
   }
 
-  const currentLayingRatePercent = Math.min(100, Math.round((todayEggCount / activeLayersCount) * 100));
+  const currentLayingRatePercent = activeLayersCount > 0 
+    ? Math.min(100, Math.round((todayEggCount / activeLayersCount) * 100))
+    : 0;
   const avg7DayYield = daysInLast7Count > 0 ? (eggsLast7Days / daysInLast7Count) : 0;
-  const average7DayLayingRatePercent = Math.min(100, Math.round((avg7DayYield / activeLayersCount) * 100));
+  const average7DayLayingRatePercent = activeLayersCount > 0
+    ? Math.min(100, Math.round((avg7DayYield / activeLayersCount) * 100))
+    : 0;
   
   const flawlessRatePercent = totalEggsAllTime > 0 
     ? Math.round(((totalEggsAllTime - totalBrokenAllTime) / totalEggsAllTime) * 100) 
@@ -84,7 +88,7 @@ export function computeFlockSummary(
 
   const averageEggWeightGrams = eggsWithWeight > 0 
     ? Math.round((totalWeightGrams / eggsWithWeight) * 10) / 10 
-    : 54.5;
+    : 0;
 
   return {
     totalEggsAllTime,

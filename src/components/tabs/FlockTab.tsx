@@ -200,8 +200,17 @@ export const FlockTab: React.FC<FlockTabProps> = ({
         {/* Left: Chicken Cards List (5 cols) */}
         <div className="lg:col-span-5 space-y-3 min-w-0">
           {filteredChickens.length === 0 ? (
-            <div className="p-8 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl">
-              <p className="text-xs text-stone-500 dark:text-stone-400">No chickens match your search criteria.</p>
+            <div className="p-8 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl space-y-2">
+              <p className="text-xs font-semibold text-stone-700 dark:text-stone-300">No chickens registered yet.</p>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">Click "Register New Bird" to add your first hen or rooster.</p>
+              <button
+                type="button"
+                onClick={onOpenAddChicken}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Register First Bird</span>
+              </button>
             </div>
           ) : (
             filteredChickens.map(chicken => {
@@ -573,8 +582,9 @@ export const FlockTab: React.FC<FlockTabProps> = ({
               )}
             </div>
           ) : (
-            <div className="p-12 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl">
-              <p className="text-xs text-stone-500 dark:text-stone-400">Select a chicken to view growth dossier and records.</p>
+            <div className="p-12 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl space-y-2">
+              <p className="text-xs font-semibold text-stone-700 dark:text-stone-300">No chicken selected</p>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">Select a chicken from the list or register a new bird to view growth dossiers, laying expectations, and generate printable QR badges.</p>
             </div>
           )}
         </div>
