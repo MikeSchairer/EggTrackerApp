@@ -14,7 +14,8 @@ import {
   CheckCircle2, 
   TrendingUp, 
   Sparkles, 
-  Layers 
+  Layers,
+  Pencil 
 } from 'lucide-react';
 import { Coop, Chicken, EggLog, EggColor, EggSize, EggShape, EggBatch } from '../../types/flock';
 import { EGG_SIZES, EGG_COLORS, EGG_SHAPES, CHICKEN_BREEDS } from '../../data/breeds';
@@ -28,6 +29,7 @@ interface EggsTabProps {
   eggLogs: EggLog[];
   eggBatches?: EggBatch[];
   onOpenLogEggs: () => void;
+  onEditLog?: (log: EggLog) => void;
   onDeleteLog: (logId: string) => void;
   onSaveEggBatch?: (batch: EggBatch) => void;
 }
@@ -38,6 +40,7 @@ export const EggsTab: React.FC<EggsTabProps> = ({
   eggLogs,
   eggBatches = [],
   onOpenLogEggs,
+  onEditLog,
   onDeleteLog,
   onSaveEggBatch,
 }) => {
@@ -463,6 +466,20 @@ export const EggsTab: React.FC<EggsTabProps> = ({
                       )}
                     </div>
 
+                    {onEditLog && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditLog(log);
+                        }}
+                        className="p-1.5 rounded-lg text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+                        title="Edit collection entry"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+
                     <div className="text-stone-400 dark:text-stone-500">
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
@@ -481,18 +498,34 @@ export const EggsTab: React.FC<EggsTabProps> = ({
                     <div className="space-y-2">
                       <div className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider flex items-center justify-between">
                         <span>Harvest Inspection Details ({log.eggs.length} eggs)</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm('Delete this egg collection entry?')) {
-                              onDeleteLog(log.id);
-                            }
-                          }}
-                          className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-normal flex items-center gap-1 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Delete Entry</span>
-                        </button>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          {onEditLog && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditLog(log);
+                              }}
+                              className="text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-400 text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs transition-colors cursor-pointer"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                              <span>Edit Entry</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm('Delete this egg collection entry?')) {
+                                onDeleteLog(log.id);
+                              }
+                            }}
+                            className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-normal flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete Entry</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

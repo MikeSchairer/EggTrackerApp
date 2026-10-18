@@ -49,6 +49,7 @@ function FlockAppContent() {
 
   // Modals state
   const [isLogEggsOpen, setIsLogEggsOpen] = useState<boolean>(false);
+  const [editingEggLog, setEditingEggLog] = useState<EggLog | null>(null);
   const [isChickenModalOpen, setIsChickenModalOpen] = useState<boolean>(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
   const [isCoopModalOpen, setIsCoopModalOpen] = useState<boolean>(false);
@@ -122,11 +123,26 @@ function FlockAppContent() {
   }, [state, user]);
 
   // Handlers for Eggs
+  const handleOpenLogEggs = (logToEdit?: EggLog | null) => {
+    setEditingEggLog(logToEdit || null);
+    setIsLogEggsOpen(true);
+  };
+
+  const handleCloseLogEggs = () => {
+    setIsLogEggsOpen(false);
+    setEditingEggLog(null);
+  };
+
   const handleSaveEggLog = (log: EggLog) => {
-    setState(prev => ({
-      ...prev,
-      eggLogs: [log, ...prev.eggLogs],
-    }));
+    setState(prev => {
+      const exists = prev.eggLogs.some(l => l.id === log.id);
+      return {
+        ...prev,
+        eggLogs: exists
+          ? prev.eggLogs.map(l => (l.id === log.id ? log : l))
+          : [log, ...prev.eggLogs],
+      };
+    });
   };
 
   const handleDeleteEggLog = (logId: string) => {
@@ -396,7 +412,7 @@ function FlockAppContent() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenLogEggs={() => setIsLogEggsOpen(true)}
+        onOpenLogEggs={() => handleOpenLogEggs()}
         onOpenAddChicken={handleOpenAddChicken}
         onResetData={handleResetData}
         onExportBackup={() => exportBackupJson(state)}
@@ -415,7 +431,8 @@ function FlockAppContent() {
             healthRecords={state.healthRecords || []}
             reminders={state.reminders || []}
             incubationBatches={state.incubationBatches || []}
-            onOpenLogEggs={() => setIsLogEggsOpen(true)}
+            onOpenLogEggs={() => handleOpenLogEggs()}
+            onEditEggLog={handleOpenLogEggs}
             onOpenAddChicken={handleOpenAddChicken}
             onSelectCoop={(coopId) => setState(prev => ({ ...prev, selectedCoopId: coopId }))}
             onNavigateToTab={setActiveTab}
@@ -429,7 +446,8 @@ function FlockAppContent() {
             chickens={state.chickens}
             eggLogs={state.eggLogs}
             eggBatches={state.eggBatches || []}
-            onOpenLogEggs={() => setIsLogEggsOpen(true)}
+            onOpenLogEggs={() => handleOpenLogEggs()}
+            onEditLog={handleOpenLogEggs}
             onDeleteLog={handleDeleteEggLog}
             onSaveEggBatch={handleSaveEggBatch}
           />
@@ -541,11 +559,12 @@ function FlockAppContent() {
       {isLogEggsOpen && (
         <EggLoggerModal
           isOpen={isLogEggsOpen}
-          onClose={() => setIsLogEggsOpen(false)}
+          onClose={handleCloseLogEggs}
           onSaveLog={handleSaveEggLog}
           coops={state.coops}
           chickens={state.chickens}
-          defaultCoopId={state.selectedCoopId !== 'all' ? state.selectedCoopId : undefined}
+          defaultCoopId={editingEggLog ? editingEggLog.coopId : (state.selectedCoopId !== 'all' ? state.selectedCoopId : undefined)}
+          initialLog={editingEggLog}
         />
       )}
 

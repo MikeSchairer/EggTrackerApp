@@ -13,7 +13,8 @@ import {
   X,
   Clock,
   CloudSun,
-  Layers
+  Layers,
+  Pencil
 } from 'lucide-react';
 import { Coop, Chicken, EggLog } from '../types/flock';
 import { EggVisual } from './EggVisual';
@@ -23,6 +24,7 @@ interface DailyEggCountsBarGraphProps {
   coops: Coop[];
   chickens: Chicken[];
   onOpenLogEggs: () => void;
+  onEditLog?: (log: EggLog) => void;
   onNavigateToEggsTab?: () => void;
 }
 
@@ -33,6 +35,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
   coops,
   chickens,
   onOpenLogEggs,
+  onEditLog,
   onNavigateToEggsTab,
 }) => {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(14);
@@ -680,13 +683,27 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-stone-900 dark:text-stone-100">
-                          {log.totalEggs} eggs
-                        </span>
-                        {log.brokenCount > 0 && (
-                          <span className="text-[11px] text-rose-600 font-medium">
-                            ({log.brokenCount} cracked)
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-stone-900 dark:text-stone-100">
+                            {log.totalEggs} eggs
                           </span>
+                          {log.brokenCount > 0 && (
+                            <span className="text-[11px] text-rose-600 font-medium block">
+                              ({log.brokenCount} cracked)
+                            </span>
+                          )}
+                        </div>
+
+                        {onEditLog && (
+                          <button
+                            type="button"
+                            onClick={() => onEditLog(log)}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 bg-stone-100 dark:bg-stone-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 rounded-md transition-colors cursor-pointer"
+                            title="Edit this collection entry"
+                          >
+                            <Pencil className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                            <span>Edit</span>
+                          </button>
                         )}
                       </div>
                     </div>

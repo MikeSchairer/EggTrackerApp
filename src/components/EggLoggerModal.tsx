@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2, Check, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Trash2, Check, Sparkles, Edit3 } from 'lucide-react';
 import { Coop, Chicken, EggItem, EggLog, EggSize, EggColor, EggShape, EggCondition } from '../types/flock';
 import { EGG_SIZES, EGG_COLORS, EGG_SHAPES, CHICKEN_BREEDS } from '../data/breeds';
 import { EggVisual } from './EggVisual';
@@ -11,6 +11,7 @@ interface EggLoggerModalProps {
   coops: Coop[];
   chickens: Chicken[];
   defaultCoopId?: string;
+  initialLog?: EggLog | null;
 }
 
 export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
@@ -20,34 +21,79 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   coops,
   chickens,
   defaultCoopId,
+  initialLog,
 }) => {
   if (!isOpen) return null;
 
-  const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState<string>(() => new Date().toTimeString().slice(0, 5));
-  const [coopId, setCoopId] = useState<string>(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop');
-  const [weather, setWeather] = useState<'Sunny' | 'Partly Cloudy' | 'Rainy' | 'Cold Snap' | 'Heatwave'>('Sunny');
-  const [notes, setNotes] = useState<string>('');
-  const [mode, setMode] = useState<'individual' | 'quick'>('quick');
+  const [date, setDate] = useState<string>(() => initialLog?.date || new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState<string>(() => initialLog?.time || new Date().toTimeString().slice(0, 5));
+  const [coopId, setCoopId] = useState<string>(() => initialLog?.coopId || (defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop'));
+  const [weather, setWeather] = useState<'Sunny' | 'Partly Cloudy' | 'Rainy' | 'Cold Snap' | 'Heatwave'>(() => initialLog?.weather || 'Sunny');
+  const [notes, setNotes] = useState<string>(() => initialLog?.notes || '');
+  const [mode, setMode] = useState<'individual' | 'quick'>(() => (initialLog?.eggs && initialLog.eggs.length > 0 ? 'individual' : 'quick'));
 
   // Quick mode count
-  const [quickCount, setQuickCount] = useState<number>(1);
-  const [quickBroken, setQuickBroken] = useState<number>(0);
+  const [quickCount, setQuickCount] = useState<number>(() => initialLog?.totalEggs || 1);
+  const [quickBroken, setQuickBroken] = useState<number>(() => initialLog?.brokenCount || 0);
 
   // Individual egg items
   const coopHens = chickens.filter(c => c.coopId === coopId && c.gender === 'hen');
 
-  const [eggs, setEggs] = useState<EggItem[]>([
-    {
-      id: `egg-${Date.now()}-1`,
-      size: 'large',
-      color: 'terracotta_brown',
-      shape: 'classic_oval',
-      weightGrams: 55,
-      condition: 'clean_intact',
-      chickenId: coopHens[0]?.id || '',
-    },
-  ]);
+  const [eggs, setEggs] = useState<EggItem[]>(() => {
+    if (initialLog?.eggs && initialLog.eggs.length > 0) {
+      return initialLog.eggs;
+    }
+    return [
+      {
+        id: `egg-${Date.now()}-1`,
+        size: 'large',
+        color: 'terracotta_brown',
+        shape: 'classic_oval',
+        weightGrams: 55,
+        condition: 'clean_intact',
+        chickenId: coopHens[0]?.id || '',
+      },
+    ];
+  });
+
+  // Re-sync when initialLog or isOpen changes
+  useEffect(() => {
+    if (initialLog) {
+      setDate(initialLog.date);
+      setTime(initialLog.time || new Date().toTimeString().slice(0, 5));
+      setCoopId(initialLog.coopId);
+      setWeather(initialLog.weather || 'Sunny');
+      setNotes(initialLog.notes || '');
+      setQuickCount(initialLog.totalEggs);
+      setQuickBroken(initialLog.brokenCount);
+      if (initialLog.eggs && initialLog.eggs.length > 0) {
+        setEggs(initialLog.eggs);
+        setMode('individual');
+      } else {
+        setMode('quick');
+      }
+    } else {
+      setDate(new Date().toISOString().split('T')[0]);
+      setTime(new Date().toTimeString().slice(0, 5));
+      setCoopId(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop');
+      setWeather('Sunny');
+      setNotes('');
+      setMode('quick');
+      setQuickCount(1);
+      setQuickBroken(0);
+      setEggs([
+        {
+          id: `egg-${Date.now()}-1`,
+          size: 'large',
+          color: 'terracotta_brown',
+          shape: 'classic_oval',
+          weightGrams: 55,
+          condition: 'clean_intact',
+          chickenId: chickens.find(c => c.coopId === (defaultCoopId || coops[0]?.id) && c.gender === 'hen')?.id || '',
+        },
+      ]);
+    }
+  }, [isOpen, initialLog, defaultCoopId, coops, chickens]);
 
   const handleAddEgg = () => {
     // Default to hen's expected egg color if available
@@ -131,7 +177,7 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
     }
 
     const log: EggLog = {
-      id: `log-${Date.now()}`,
+      id: initialLog ? initialLog.id : `log-${Date.now()}`,
       date,
       time,
       coopId,
@@ -152,14 +198,25 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">Log Daily Egg Collection</h2>
+            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+              {initialLog ? (
+                <>
+                  <Edit3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <span>Edit Egg Collection Entry</span>
+                </>
+              ) : (
+                <span>Log Daily Egg Collection</span>
+              )}
+            </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-              Record daily yield, egg sizes, shell colors, shapes, and coop metrics.
+              {initialLog
+                ? 'Update harvest collection date, egg counts, shell attributes, and coop notes.'
+                : 'Record daily yield, egg sizes, shell colors, shapes, and coop metrics.'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -487,9 +544,12 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs transition-colors"
+              className="px-5 py-2 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              Save Egg Collection ({mode === 'quick' ? quickCount : eggs.length} Eggs)
+              <Check className="w-4 h-4" />
+              <span>
+                {initialLog ? 'Update Collection Entry' : 'Save Egg Collection'} ({mode === 'quick' ? quickCount : eggs.length} Eggs)
+              </span>
             </button>
           </div>
         </form>
