@@ -1,10 +1,13 @@
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandling';
 import { FlockState } from '../types/flock';
 import { loadFlockState, saveFlockState } from '../utils/storage';
 
 export async function fetchUserFlockData(userId: string): Promise<FlockState | null> {
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    return loadFlockState();
+  }
   const docPath = `users/${userId}/flockData/current`;
   try {
     const docRef = doc(db, 'users', userId, 'flockData', 'current');
@@ -28,6 +31,12 @@ export async function fetchUserFlockData(userId: string): Promise<FlockState | n
 }
 
 export async function saveUserFlockData(userId: string, state: FlockState): Promise<void> {
+  // Always update local cache
+  saveFlockState(state);
+
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    return;
+  }
   const docPath = `users/${userId}/flockData/current`;
   try {
     const docRef = doc(db, 'users', userId, 'flockData', 'current');

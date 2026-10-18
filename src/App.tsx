@@ -17,6 +17,8 @@ import { CoopModal } from './components/CoopModal';
 import { PrintReportModal } from './components/PrintReportModal';
 import { ThemeModal } from './components/ThemeModal';
 import { LoginModal } from './components/LoginModal';
+import { LoginScreen } from './components/LoginScreen';
+import { Egg } from 'lucide-react';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -40,7 +42,8 @@ import {
 } from './types/flock';
 
 function FlockAppContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [guestMode, setGuestMode] = useState<boolean>(false);
   const [state, setState] = useState<FlockState>(() => loadFlockState());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
@@ -366,6 +369,26 @@ function FlockAppContent() {
       }
     }
   };
+
+  // Show sleek splash loading while resolving auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--theme-bg-canvas,#fafaf9)] dark:bg-stone-950 text-stone-900 dark:text-stone-100 p-4">
+        <div className="w-16 h-16 rounded-3xl bg-amber-600 text-white flex items-center justify-center shadow-xl shadow-amber-600/20 animate-pulse mb-4">
+          <Egg className="w-9 h-9" />
+        </div>
+        <p className="text-base font-bold text-stone-800 dark:text-stone-200">
+          Loading Flocker...
+        </p>
+        <span className="text-xs text-stone-400 mt-1">Connecting to your homestead</span>
+      </div>
+    );
+  }
+
+  // Ask for login before loading app
+  if (!user && !guestMode) {
+    return <LoginScreen onContinueAsGuest={() => setGuestMode(true)} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--theme-bg-canvas)] dark:bg-stone-950 text-stone-900 dark:text-stone-100 selection:bg-amber-200 selection:text-amber-950 font-sans transition-colors duration-200 overflow-x-hidden w-full max-w-full">

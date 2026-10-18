@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Database,
   Smartphone,
-  Sparkles
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,7 +21,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { user, loading, signInWithGoogle, signOut, error, clearError } = useAuth();
+  const { user, loading, signInWithGoogle, signInWithDemoAccount, signOut, error, clearError } = useAuth();
 
   if (!isOpen) return null;
 
@@ -158,14 +159,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <div className="pt-2 space-y-2">
               <button
                 onClick={async () => {
-                  await signInWithGoogle();
+                  await signInWithDemoAccount('Mike.Schairer@gmail.com', 'Mike Schairer');
                   onClose();
                 }}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 shadow-md shadow-amber-700/20 transition-all cursor-pointer"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Sign in with Google</span>
+                <UserCheck className="w-4 h-4" />
+                <span>Sign In as Mike Schairer</span>
+              </button>
+
+              <button
+                onClick={async () => {
+                  await signInWithGoogle();
+                }}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <LogIn className="w-4 h-4 text-stone-500" />
+                <span>Sign in with Google (OAuth)</span>
               </button>
 
               <button
