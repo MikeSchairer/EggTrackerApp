@@ -26,8 +26,10 @@ export interface DayYield {
 export function computeFlockSummary(
   eggLogs: EggLog[],
   chickens: Chicken[],
-  targetDate: string = '2026-10-09'
+  targetDate?: string
 ): FlockSummaryMetrics {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const effectiveTarget = targetDate || todayStr;
   const activeLayers = chickens.filter(c => c.lifeStage === 'active_layer');
   const activeLayersCount = activeLayers.length;
   const totalFlockCount = chickens.length;
@@ -49,11 +51,11 @@ export function computeFlockSummary(
   });
 
   // Today eggs
-  const todayLogs = eggLogs.filter(log => log.date === targetDate);
+  const todayLogs = eggLogs.filter(log => log.date === effectiveTarget);
   const todayEggCount = todayLogs.reduce((sum, l) => sum + l.totalEggs, 0);
 
   // Past 7 days & 30 days
-  const targetTime = new Date(targetDate).getTime();
+  const targetTime = new Date(effectiveTarget).getTime();
   const dayMs = 24 * 60 * 60 * 1000;
 
   let eggsLast7Days = 0;
@@ -108,10 +110,13 @@ export function computeDailyProductionTrends(
   eggLogs: EggLog[],
   activeLayersCount: number,
   daysCount: number = 14,
-  endDateStr: string = '2026-10-09'
+  endDateStr?: string
 ): DayYield[] {
   const result: DayYield[] = [];
-  const endTime = new Date(endDateStr).getTime();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const maxLogDate = eggLogs.reduce((max, l) => (l.date > max ? l.date : max), todayStr);
+  const effectiveEnd = endDateStr || (maxLogDate > todayStr ? maxLogDate : todayStr);
+  const endTime = new Date(effectiveEnd).getTime();
   const dayMs = 24 * 60 * 60 * 1000;
 
   for (let i = daysCount - 1; i >= 0; i--) {
@@ -176,21 +181,27 @@ export function computeEggColorDistribution(eggLogs: EggLog[]): { color: EggColo
   const colors: EggColor[] = [
     'dark_chocolate',
     'sky_blue',
+    'aqua',
+    'mint_green',
     'olive_green',
     'terracotta_brown',
     'speckled_brown',
     'pinkish_tint',
     'cream_tinted',
+    'porcelain_white',
     'chalk_white',
   ];
   const counts: Record<EggColor, number> = {
     dark_chocolate: 0,
     sky_blue: 0,
+    aqua: 0,
+    mint_green: 0,
     olive_green: 0,
     terracotta_brown: 0,
     speckled_brown: 0,
     pinkish_tint: 0,
     cream_tinted: 0,
+    porcelain_white: 0,
     chalk_white: 0,
   };
 

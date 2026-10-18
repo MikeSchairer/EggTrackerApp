@@ -575,11 +575,14 @@ export const EGG_SIZES: { id: string; label: string; minWeight: number; maxWeigh
 export const EGG_COLORS: { id: string; label: string; hex: string; borderHex: string; description: string }[] = [
   { id: 'dark_chocolate', label: 'Dark Chocolate', hex: '#4A2311', borderHex: '#36180a', description: 'Deep French Marans russet' },
   { id: 'sky_blue', label: 'Sky Blue', hex: '#A2C6CE', borderHex: '#7fa4ac', description: 'Ameraucana oocyanin pigment' },
+  { id: 'aqua', label: 'Aqua', hex: '#5BB6CD', borderHex: '#3b92a6', description: 'Luminous blue-green turquoise (Cream Legbar / Whiting True Blue)' },
+  { id: 'mint_green', label: 'Mint Green', hex: '#98D8AA', borderHex: '#72b584', description: 'Fresh sage-mint pastel bloom (Easter Egger / Favaucana)' },
   { id: 'olive_green', label: 'Olive Green', hex: '#6B7A49', borderHex: '#4f5b33', description: 'Olive egger bloom overlay' },
   { id: 'terracotta_brown', label: 'Terracotta Brown', hex: '#A86544', borderHex: '#874e32', description: 'Classic homestead brown' },
   { id: 'speckled_brown', label: 'Speckled Brown', hex: '#9E5B3D', borderHex: '#733e26', description: 'Welsummer freckled shell' },
   { id: 'pinkish_tint', label: 'Rosy Pink / Buff', hex: '#DDBFA8', borderHex: '#bda18b', description: 'Buff Orpington warm hue' },
   { id: 'cream_tinted', label: 'Cream / Ivory', hex: '#EBE0CC', borderHex: '#cfc4b0', description: 'Soft heritage ivory tint' },
+  { id: 'porcelain_white', label: 'Porcelain White', hex: '#FFFFFF', borderHex: '#D1D5DB', description: 'Brilliant silky porcelain glaze luster' },
   { id: 'chalk_white', label: 'Chalk White', hex: '#F9F8F5', borderHex: '#ddd9d0', description: 'Pure Leghorn white' },
 ];
 

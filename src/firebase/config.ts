@@ -1,10 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import fallbackConfig from '../../firebase-applet-config.json';
 
-// Fallback configuration provisioned for this project
-const PROVISIONED_CONFIG = {
+// Default configuration provisioned for this project
+const DEFAULT_CONFIG = {
   projectId: 'adept-transformer-s2sm5',
   appId: '1:685227848111:web:0a5ee29ca0c905af06bf5a',
   apiKey: 'AIzaSyBU-95NZ0oUjTwqbN5IzbOopxXFJPDboFc',
@@ -17,52 +16,23 @@ const PROVISIONED_CONFIG = {
   recaptchaSiteKey: '',
 };
 
-// Priority: 1. Environment variables -> 2. firebase-applet-config.json -> 3. PROVISIONED_CONFIG
+// Priority: Environment variables (VITE_FIREBASE_*) -> DEFAULT_CONFIG
 const resolvedConfig = {
-  projectId:
-    import.meta.env.VITE_FIREBASE_PROJECT_ID ||
-    fallbackConfig?.projectId ||
-    PROVISIONED_CONFIG.projectId,
-  appId:
-    import.meta.env.VITE_FIREBASE_APP_ID ||
-    fallbackConfig?.appId ||
-    PROVISIONED_CONFIG.appId,
-  apiKey:
-    import.meta.env.VITE_FIREBASE_API_KEY ||
-    fallbackConfig?.apiKey ||
-    PROVISIONED_CONFIG.apiKey,
-  authDomain:
-    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
-    fallbackConfig?.authDomain ||
-    PROVISIONED_CONFIG.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || DEFAULT_CONFIG.projectId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || DEFAULT_CONFIG.appId,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || DEFAULT_CONFIG.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT_CONFIG.authDomain,
   firestoreDatabaseId:
-    import.meta.env.VITE_FIREBASE_DATABASE_ID ||
-    fallbackConfig?.firestoreDatabaseId ||
-    PROVISIONED_CONFIG.firestoreDatabaseId ||
-    '(default)',
-  storageBucket:
-    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ||
-    fallbackConfig?.storageBucket ||
-    PROVISIONED_CONFIG.storageBucket,
+    import.meta.env.VITE_FIREBASE_DATABASE_ID || DEFAULT_CONFIG.firestoreDatabaseId || '(default)',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT_CONFIG.storageBucket,
   messagingSenderId:
-    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ||
-    fallbackConfig?.messagingSenderId ||
-    PROVISIONED_CONFIG.messagingSenderId,
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT_CONFIG.messagingSenderId,
   measurementId:
-    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ||
-    fallbackConfig?.measurementId ||
-    PROVISIONED_CONFIG.measurementId ||
-    '',
+    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || DEFAULT_CONFIG.measurementId || '',
   oAuthClientId:
-    import.meta.env.VITE_FIREBASE_OAUTH_CLIENT_ID ||
-    fallbackConfig?.oAuthClientId ||
-    PROVISIONED_CONFIG.oAuthClientId ||
-    '',
+    import.meta.env.VITE_FIREBASE_OAUTH_CLIENT_ID || DEFAULT_CONFIG.oAuthClientId || '',
   recaptchaSiteKey:
-    import.meta.env.VITE_FIREBASE_RECAPTCHA_SITE_KEY ||
-    fallbackConfig?.recaptchaSiteKey ||
-    PROVISIONED_CONFIG.recaptchaSiteKey ||
-    '',
+    import.meta.env.VITE_FIREBASE_RECAPTCHA_SITE_KEY || DEFAULT_CONFIG.recaptchaSiteKey || '',
 };
 
 export const isFirebaseConfigured = Boolean(

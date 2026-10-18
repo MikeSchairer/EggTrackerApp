@@ -29,13 +29,14 @@ import {
   SmartReminder, 
   IncubationBatch 
 } from '../../types/flock';
-import { computeFlockSummary, computeDailyProductionTrends } from '../../utils/analytics';
+import { computeFlockSummary } from '../../utils/analytics';
 import { 
   calculateSeasonalLayingPredictions, 
   calculateFeedDaysRemaining, 
   getWeatherCareAdvisories 
 } from '../../utils/flockCalculations';
 import { EggVisual } from '../EggVisual';
+import { DailyEggCountsBarGraph } from '../DailyEggCountsBarGraph';
 import { CHICKEN_BREEDS } from '../../data/breeds';
 
 interface DashboardTabProps {
@@ -70,14 +71,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   const [localCompletedReminders, setLocalCompletedReminders] = useState<Record<string, boolean>>({});
 
   const summary = computeFlockSummary(eggLogs, chickens);
-  const trends = computeDailyProductionTrends(eggLogs, summary.activeLayersCount, 14);
-
-  // Maximum daily eggs in 14-day window for scaling chart
-  const maxDayEggs = Math.max(1, ...trends.map(t => t.totalEggs));
 
   // Today's date reference
   const todayDate = new Date().toISOString().split('T')[0];
-  const todayLogs = eggLogs.filter(l => l.date === todayDate || l.date === '2026-10-09');
+  const todayLogs = eggLogs.filter(l => l.date === todayDate);
   const todayEggCount = todayLogs.reduce((sum, l) => sum + l.totalEggs, 0);
 
   // Recent 5 logs
@@ -577,71 +574,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         </div>
       </div>
 
-      {/* 5. 14-DAY PRODUCTION TREND & COOPS OVERVIEW */}
+      {/* 5. DAILY EGG COUNTS BAR GRAPH */}
+      <DailyEggCountsBarGraph
+        eggLogs={eggLogs}
+        coops={coops}
+        chickens={chickens}
+        onOpenLogEggs={onOpenLogEggs}
+        onNavigateToEggsTab={() => onNavigateToTab('eggs')}
+      />
+
+      {/* 6. COOP FACILITIES, RECENT COLLECTIONS & ACTIVE GROWTH */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 14-Day Bar Chart */}
-        <div className="lg:col-span-2 p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">14-Day Egg Production & Lay Rate</h2>
-              <p className="text-xs text-stone-500 dark:text-stone-400">Daily yield breakdown across coops with laying efficiency percentage.</p>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-stone-600 dark:text-stone-300">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-xs bg-amber-700 dark:bg-amber-500" />
-                <span>Eggs Collected</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-xs bg-emerald-600 dark:bg-emerald-400" />
-                <span>Lay Rate %</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bar Chart Container */}
-          <div className="pt-6 pb-2">
-            <div className="h-48 flex items-end justify-between gap-1 sm:gap-2 border-b border-stone-200 dark:border-stone-700 pb-2">
-              {trends.map((item) => {
-                const heightPercent = Math.max(8, Math.round((item.totalEggs / (maxDayEggs + 2)) * 100));
-                const isToday = item.date === todayDate || item.date === '2026-10-09';
-
-                return (
-                  <div key={item.date} className="flex-1 flex flex-col items-center gap-1 group relative">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-stone-900 dark:bg-stone-800 text-white text-[10px] rounded-md px-2 py-1 whitespace-nowrap shadow-md border border-stone-700">
-                      <p className="font-semibold">{item.date}: {item.totalEggs} eggs</p>
-                      <p className="text-amber-300 font-mono">{item.layingRatePercent}% lay efficiency</p>
-                    </div>
-
-                    <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500 group-hover:text-stone-700 dark:group-hover:text-stone-300 tabular-nums">
-                      {item.totalEggs}
-                    </span>
-
-                    <div
-                      className={`w-full rounded-t-md transition-all ${
-                        isToday
-                          ? 'bg-amber-600 dark:bg-amber-500 shadow-sm ring-1 ring-amber-400/50'
-                          : 'bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/80 dark:hover:bg-amber-600'
-                      }`}
-                      style={{ height: `${heightPercent}%` }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-between text-[11px] font-medium text-stone-500 dark:text-stone-400 pt-2 px-1">
-              <span>{trends[0]?.displayDate}</span>
-              <span>{trends[Math.floor(trends.length / 2)]?.displayDate}</span>
-              <span className="font-bold text-amber-800 dark:text-amber-400">Today ({trends[trends.length - 1]?.displayDate})</span>
-            </div>
-          </div>
-
-          <div className="p-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-stone-600 dark:text-stone-300">
-            <span>Average Shell Integrity: <strong className="text-stone-900 dark:text-stone-100 font-mono">{summary.flawlessRatePercent}% clean & intact</strong></span>
-            <span>Avg Weight: <strong className="text-stone-900 dark:text-stone-100 font-mono">{summary.averageEggWeightGrams}g</strong></span>
-          </div>
-        </div>
-
         {/* Quick Coops Overview */}
         <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 flex flex-col justify-between transition-colors">
           <div>
@@ -720,133 +663,154 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
         </div>
-      </div>
 
-      {/* 6. RECENT COLLECTIONS & ACTIVE GROWTH HIGHLIGHTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">Recent Collections</h2>
-              <p className="text-xs text-stone-500 dark:text-stone-400">Log entries with shell inspections.</p>
+        {/* Recent Collections */}
+        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">Recent Collections</h2>
+                <p className="text-xs text-stone-500 dark:text-stone-400">Log entries with shell inspections.</p>
+              </div>
+              <button
+                onClick={() => onNavigateToTab('eggs')}
+                className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+              >
+                All Eggs →
+              </button>
             </div>
-            <button
-              onClick={() => onNavigateToTab('eggs')}
-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
-            >
-              All Eggs Ledger →
-            </button>
-          </div>
 
-          {recentLogs.length === 0 ? (
-            <div className="p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
-              No egg collections recorded yet. Tap "Log Today's Eggs" above to add your first log.
-            </div>
-          ) : (
-            <div className="divide-y divide-stone-100 dark:divide-stone-800">
-              {recentLogs.map((log) => {
-                const coop = coopMap.get(log.coopId);
-                return (
-                  <div key={log.id} className="py-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-amber-800 dark:text-amber-400">
-                        <Egg className="w-5 h-5 fill-amber-50 dark:fill-amber-950/40" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{coop?.name || 'Coop'}</span>
-                          <span className="text-xs text-stone-400">·</span>
-                          <span className="text-xs text-stone-500 dark:text-stone-400">{log.date} {log.time ? `(${log.time})` : ''}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {log.eggs.slice(0, 5).map((egg) => (
-                            <EggVisual key={egg.id} color={egg.color} shape={egg.shape} size={egg.size} className="w-4 h-5" />
-                          ))}
-                          {log.eggs.length > 5 && (
-                            <span className="text-[10px] text-stone-400 font-mono">+{log.eggs.length - 5}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="font-mono text-base font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                        {log.totalEggs}
-                      </span>
-                      <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
-                      {log.brokenCount > 0 && (
-                        <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">Active Growth Monitoring</h2>
-              <p className="text-xs text-stone-500 dark:text-stone-400">Pullets and growing birds under weight observation.</p>
-            </div>
-            <button
-              onClick={() => onNavigateToTab('flock')}
-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
-            >
-              Growth Logs →
-            </button>
-          </div>
-
-          {chickens.filter(c => c.weightRecords && c.weightRecords.length > 0).length === 0 ? (
-            <div className="p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
-              No weight records logged yet. Record bird weigh-ins in the Flock tab.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {chickens
-                .filter(c => c.weightRecords && c.weightRecords.length > 0)
-                .slice(0, 4)
-                .map(chicken => {
-                  const breed = CHICKEN_BREEDS.find(b => b.id === chicken.breedId);
-                  const latestWeight = chicken.weightRecords[chicken.weightRecords.length - 1];
-                  const prevWeight = chicken.weightRecords.length > 1 
-                    ? chicken.weightRecords[chicken.weightRecords.length - 2] 
-                    : null;
-                  const gain = prevWeight ? latestWeight.weightGrams - prevWeight.weightGrams : 0;
-
+            {recentLogs.length === 0 ? (
+              <div className="mt-4 p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
+                No egg collections recorded yet. Tap "Log Today's Eggs" above to add your first log.
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-100 dark:divide-stone-800 mt-2">
+                {recentLogs.map((log) => {
+                  const coop = coopMap.get(log.coopId);
                   return (
-                    <div key={chicken.id} className="p-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chicken.avatarColor }} />
-                          <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
-                          <span className="text-xs text-stone-500 dark:text-stone-400">({breed?.name})</span>
+                    <div key={log.id} className="py-2.5 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-amber-800 dark:text-amber-400 shrink-0">
+                          <Egg className="w-4 h-4 fill-amber-50 dark:fill-amber-950/40" />
                         </div>
-                        <p className="text-[11px] text-stone-400 mt-0.5">
-                          {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
-                        </p>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate max-w-[90px]">{coop?.name || 'Coop'}</span>
+                            <span className="text-[10px] text-stone-400">·</span>
+                            <span className="text-[11px] text-stone-500 dark:text-stone-400">{log.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {log.eggs.slice(0, 4).map((egg) => (
+                              <EggVisual key={egg.id} color={egg.color} shape={egg.shape} size={egg.size} className="w-3.5 h-4.5" />
+                            ))}
+                            {log.eggs.length > 4 && (
+                              <span className="text-[9px] text-stone-400 font-mono">+{log.eggs.length - 4}</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                          {latestWeight.weightGrams}g
+                          {log.totalEggs}
                         </span>
-                        <span className="text-[11px] text-stone-500 dark:text-stone-400 ml-1">
-                          ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
-                        </span>
-                        {gain > 0 && (
-                          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
-                            +{gain}g gained
-                          </p>
+                        <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
+                        {log.brokenCount > 0 && (
+                          <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
                         )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-stone-200 dark:border-stone-800">
+            <button
+              onClick={() => onNavigateToTab('eggs')}
+              className="w-full py-2 text-center text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-lg transition-colors cursor-pointer"
+            >
+              Open Full Egg Production Ledger →
+            </button>
+          </div>
+        </div>
+
+        {/* Active Growth Monitoring */}
+        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">Growth Tracking</h2>
+                <p className="text-xs text-stone-500 dark:text-stone-400">Pullets and growing birds observation.</p>
+              </div>
+              <button
+                onClick={() => onNavigateToTab('flock')}
+                className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+              >
+                Growth Logs →
+              </button>
             </div>
-          )}
+
+            {chickens.filter(c => c.weightRecords && c.weightRecords.length > 0).length === 0 ? (
+              <div className="mt-4 p-6 text-center text-xs text-stone-500 dark:text-stone-400 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl">
+                No weight records logged yet. Record bird weigh-ins in the Flock tab.
+              </div>
+            ) : (
+              <div className="space-y-2.5 mt-2">
+                {chickens
+                  .filter(c => c.weightRecords && c.weightRecords.length > 0)
+                  .slice(0, 4)
+                  .map(chicken => {
+                    const breed = CHICKEN_BREEDS.find(b => b.id === chicken.breedId);
+                    const latestWeight = chicken.weightRecords[chicken.weightRecords.length - 1];
+                    const prevWeight = chicken.weightRecords.length > 1 
+                      ? chicken.weightRecords[chicken.weightRecords.length - 2] 
+                      : null;
+                    const gain = prevWeight ? latestWeight.weightGrams - prevWeight.weightGrams : 0;
+
+                    return (
+                      <div key={chicken.id} className="p-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chicken.avatarColor }} />
+                            <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
+                            <span className="text-[11px] text-stone-500 dark:text-stone-400">({breed?.name})</span>
+                          </div>
+                          <p className="text-[10px] text-stone-400 mt-0.5">
+                            {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-mono text-xs font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                            {latestWeight.weightGrams}g
+                          </span>
+                          <span className="text-[10px] text-stone-500 dark:text-stone-400 ml-1">
+                            ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
+                          </span>
+                          {gain > 0 && (
+                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
+                              +{gain}g gained
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-stone-200 dark:border-stone-800">
+            <button
+              onClick={() => onNavigateToTab('flock')}
+              className="w-full py-2 text-center text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-lg transition-colors cursor-pointer"
+            >
+              Open Flock Growth Profiles →
+            </button>
+          </div>
         </div>
       </div>
     </div>

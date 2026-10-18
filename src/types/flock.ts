@@ -8,7 +8,10 @@ export type EggColor =
   | 'cream_tinted' 
   | 'chalk_white' 
   | 'speckled_brown'
-  | 'pinkish_tint';
+  | 'pinkish_tint'
+  | 'mint_green'
+  | 'aqua'
+  | 'porcelain_white';
 
 export type EggShape = 
   | 'classic_oval' 
@@ -86,6 +89,7 @@ export interface Chicken {
   statusDate?: string;
   statusNotes?: string;
   photoUrl?: string;
+  defaultEggColor?: EggColor;
   avatarColor: string;
   colorDescription?: string;
   weightRecords: WeightRecord[];
