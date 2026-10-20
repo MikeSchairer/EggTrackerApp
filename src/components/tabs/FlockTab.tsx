@@ -6,6 +6,7 @@ import { calculateAgeInWeeks, formatAgeFriendly, getLatestWeight } from '../../u
 import { calculateChickenAge } from '../../utils/flockCalculations';
 import { GrowthWeighInModal } from '../GrowthWeighInModal';
 import { ChickenQrModal } from '../ChickenQrModal';
+import { ChickenAvatar } from '../ChickenAvatar';
 
 interface FlockTabProps {
   coops: Coop[];
@@ -233,12 +234,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-xs ring-1 ring-black/10 dark:ring-white/20 shrink-0"
-                        style={{ backgroundColor: chicken.avatarColor }}
-                      >
-                        {chicken.name.charAt(0)}
-                      </div>
+                      <ChickenAvatar
+                        chicken={chicken}
+                        className="w-12 h-12 rounded-xl ring-1 ring-black/10 dark:ring-white/20"
+                      />
 
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -322,13 +321,11 @@ export const FlockTab: React.FC<FlockTabProps> = ({
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs p-6 space-y-6 transition-colors">
               {/* Header Dossier */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200 dark:border-stone-800">
-                <div className="flex items-center gap-3.5">
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-xs ring-2 ring-black/10 dark:ring-white/20 shrink-0"
-                    style={{ backgroundColor: activeBird.avatarColor }}
-                  >
-                    {activeBird.name.charAt(0)}
-                  </div>
+                <div className="flex items-center gap-4">
+                  <ChickenAvatar
+                    chicken={activeBird}
+                    className="w-16 h-16 rounded-2xl ring-2 ring-amber-500/40 shadow-sm"
+                  />
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">{activeBird.name}</h2>

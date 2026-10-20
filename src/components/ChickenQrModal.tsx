@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { X, Printer, Download, QrCode, CheckCircle2, ShieldCheck, Feather } from 'lucide-react';
 import { Chicken, BreedInfo, Coop } from '../types/flock';
 import { calculateChickenAge } from '../utils/flockCalculations';
+import { ChickenAvatar } from './ChickenAvatar';
 
 interface ChickenQrModalProps {
   chicken: Chicken | null;
@@ -110,7 +111,7 @@ export const ChickenQrModal: React.FC<ChickenQrModalProps> = ({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                 <span className="text-[11px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 font-mono">
-                  CLUCK & CLUTCH FLOCK ID
+                  FLOCKER BIRD ID
                 </span>
               </div>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
@@ -135,13 +136,16 @@ export const ChickenQrModal: React.FC<ChickenQrModalProps> = ({
 
               {/* Bird Profile Specs */}
               <div className="sm:col-span-7 space-y-2">
-                <div>
-                  <h3 className="text-lg font-extrabold text-stone-900 dark:text-stone-100 leading-tight">
-                    {chicken.name}
-                  </h3>
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                    {breed?.name || 'Heritage Chicken'}
-                  </p>
+                <div className="flex items-center gap-2.5">
+                  <ChickenAvatar chicken={chicken} className="w-10 h-10 rounded-xl shrink-0" />
+                  <div>
+                    <h3 className="text-lg font-extrabold text-stone-900 dark:text-stone-100 leading-tight">
+                      {chicken.name}
+                    </h3>
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      {breed?.name || 'Heritage Chicken'}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-stone-600 dark:text-stone-300">

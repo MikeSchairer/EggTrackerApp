@@ -18,7 +18,8 @@ import {
   Check, 
   RefreshCw,
   Bell,
-  Feather
+  Feather,
+  Pencil
 } from 'lucide-react';
 import { 
   Coop, 
@@ -37,6 +38,7 @@ import {
 } from '../../utils/flockCalculations';
 import { EggVisual } from '../EggVisual';
 import { DailyEggCountsBarGraph } from '../DailyEggCountsBarGraph';
+import { ChickenAvatar } from '../ChickenAvatar';
 import { CHICKEN_BREEDS } from '../../data/breeds';
 
 interface DashboardTabProps {
@@ -48,6 +50,7 @@ interface DashboardTabProps {
   reminders?: SmartReminder[];
   incubationBatches?: IncubationBatch[];
   onOpenLogEggs: () => void;
+  onEditEggLog?: (log: EggLog) => void;
   onOpenAddChicken: () => void;
   onSelectCoop: (coopId: string) => void;
   onNavigateToTab: (tab: string) => void;
@@ -63,6 +66,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   reminders = [],
   incubationBatches = [],
   onOpenLogEggs,
+  onEditEggLog,
   onOpenAddChicken,
   onSelectCoop,
   onNavigateToTab,
@@ -580,6 +584,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         coops={coops}
         chickens={chickens}
         onOpenLogEggs={onOpenLogEggs}
+        onEditLog={onEditEggLog}
         onNavigateToEggsTab={() => onNavigateToTab('eggs')}
       />
 
@@ -711,13 +716,25 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                          {log.totalEggs}
-                        </span>
-                        <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
-                        {log.brokenCount > 0 && (
-                          <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                            {log.totalEggs}
+                          </span>
+                          <span className="text-xs text-stone-500 dark:text-stone-400 ml-1">eggs</span>
+                          {log.brokenCount > 0 && (
+                            <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">({log.brokenCount} cracked)</p>
+                          )}
+                        </div>
+                        {onEditEggLog && (
+                          <button
+                            type="button"
+                            onClick={() => onEditEggLog(log)}
+                            className="p-1.5 rounded-lg text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors cursor-pointer"
+                            title="Edit collection entry"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
                     </div>
@@ -772,15 +789,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 
                     return (
                       <div key={chicken.id} className="p-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-750 rounded-xl flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chicken.avatarColor }} />
-                            <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
-                            <span className="text-[11px] text-stone-500 dark:text-stone-400">({breed?.name})</span>
+                        <div className="flex items-center gap-2.5">
+                          <ChickenAvatar chicken={chicken} className="w-8 h-8 rounded-lg shrink-0" />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-stone-900 dark:text-stone-100">{chicken.name}</span>
+                              <span className="text-[11px] text-stone-500 dark:text-stone-400">({breed?.name})</span>
+                            </div>
+                            <p className="text-[10px] text-stone-400 mt-0.5">
+                              {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
+                            </p>
                           </div>
-                          <p className="text-[10px] text-stone-400 mt-0.5">
-                            {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
-                          </p>
                         </div>
 
                         <div className="text-right">
