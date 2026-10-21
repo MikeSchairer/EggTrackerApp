@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Check, Camera, Image as ImageIcon, Trash2, Egg, Sparkles } from 'lucide-react';
 import { Coop, Chicken, LifeStage, EggColor } from '../types/flock';
 import { CHICKEN_BREEDS, EGG_COLORS } from '../data/breeds';
+import { getTodayDateStr } from '../utils/dateUtils';
 
 interface ChickenModalProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
     if (!editingChicken && initialWeight && parseInt(initialWeight) > 0) {
       weightRecords.push({
         id: `w-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayDateStr(),
         weightGrams: parseInt(initialWeight),
         ageWeeks: 20,
         featheringStage: 'full_plumage',

@@ -1,5 +1,6 @@
 import { Coop, Chicken, EggLog, EggSize, EggColor, EggShape, BreedInfo } from '../types/flock';
 import { CHICKEN_BREEDS } from '../data/breeds';
+import { getTodayDateStr, shiftDate, formatDisplayDate } from './dateUtils';
 
 export interface FlockSummaryMetrics {
   totalEggsAllTime: number;
@@ -26,10 +27,11 @@ export interface DayYield {
 export function computeFlockSummary(
   eggLogs: EggLog[],
   chickens: Chicken[],
-  targetDate?: string
+  targetDate?: string,
+  timeZone?: string
 ): FlockSummaryMetrics {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const effectiveTarget = targetDate || todayStr;
+  const todayStr = targetDate || getTodayDateStr(timeZone);
+  const effectiveTarget = todayStr;
   const activeLayers = chickens.filter(c => c.lifeStage === 'active_layer');
   const activeLayersCount = activeLayers.length;
   const totalFlockCount = chickens.length;
@@ -55,15 +57,12 @@ export function computeFlockSummary(
   const todayEggCount = todayLogs.reduce((sum, l) => sum + l.totalEggs, 0);
 
   // Past 7 days & 30 days
-  const targetTime = new Date(effectiveTarget).getTime();
-  const dayMs = 24 * 60 * 60 * 1000;
-
   let eggsLast7Days = 0;
   let daysInLast7Count = 0;
   let eggsLast30Days = 0;
 
   for (let i = 0; i < 7; i++) {
-    const dStr = new Date(targetTime - i * dayMs).toISOString().split('T')[0];
+    const dStr = shiftDate(effectiveTarget, -i);
     const dLogs = eggLogs.filter(l => l.date === dStr);
     const dayTotal = dLogs.reduce((sum, l) => sum + l.totalEggs, 0);
     eggsLast7Days += dayTotal;
@@ -71,7 +70,7 @@ export function computeFlockSummary(
   }
 
   for (let i = 0; i < 30; i++) {
-    const dStr = new Date(targetTime - i * dayMs).toISOString().split('T')[0];
+    const dStr = shiftDate(effectiveTarget, -i);
     const dLogs = eggLogs.filter(l => l.date === dStr);
     eggsLast30Days += dLogs.reduce((sum, l) => sum + l.totalEggs, 0);
   }
@@ -110,19 +109,17 @@ export function computeDailyProductionTrends(
   eggLogs: EggLog[],
   activeLayersCount: number,
   daysCount: number = 14,
-  endDateStr?: string
+  endDateStr?: string,
+  timeZone?: string
 ): DayYield[] {
   const result: DayYield[] = [];
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayDateStr(timeZone);
   const maxLogDate = eggLogs.reduce((max, l) => (l.date > max ? l.date : max), todayStr);
   const effectiveEnd = endDateStr || (maxLogDate > todayStr ? maxLogDate : todayStr);
-  const endTime = new Date(effectiveEnd).getTime();
-  const dayMs = 24 * 60 * 60 * 1000;
 
   for (let i = daysCount - 1; i >= 0; i--) {
-    const d = new Date(endTime - i * dayMs);
-    const dStr = d.toISOString().split('T')[0];
-    const shortLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dStr = shiftDate(effectiveEnd, -i);
+    const shortLabel = formatDisplayDate(dStr, { month: 'short', day: 'numeric' });
 
     const logs = eggLogs.filter(l => l.date === dStr);
     const total = logs.reduce((sum, l) => sum + l.totalEggs, 0);

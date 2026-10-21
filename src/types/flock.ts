@@ -293,4 +293,5 @@ export interface FlockState {
   reminders?: SmartReminder[];
   coopEnvironmentLogs?: CoopEnvironmentLog[];
   coopMaintenanceItems?: CoopMaintenanceItem[];
+  timezone?: string;
 }

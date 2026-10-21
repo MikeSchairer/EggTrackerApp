@@ -21,6 +21,7 @@ import {
   calculateFeedDaysRemaining,
   STANDARD_DAILY_FEED_LBS_PER_HEN 
 } from '../../utils/flockCalculations';
+import { getTodayDateStr } from '../../utils/dateUtils';
 
 interface FeedInventoryTabProps {
   feedItems: FeedItem[];
@@ -49,7 +50,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
   const [formThreshold, setFormThreshold] = useState<number>(15);
   const [formCost, setFormCost] = useState<number>(24.99);
   const [formBagWeight, setFormBagWeight] = useState<number>(50);
-  const [formPurchaseDate, setFormPurchaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [formPurchaseDate, setFormPurchaseDate] = useState<string>(() => getTodayDateStr());
   const [formNotes, setFormNotes] = useState<string>('');
 
   const activeChickens = chickens.filter(c => c.status !== 'deceased' && c.status !== 'sold' && c.status !== 'rehomed');
@@ -101,7 +102,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
     setFormThreshold(15);
     setFormCost(24.99);
     setFormBagWeight(50);
-    setFormPurchaseDate(new Date().toISOString().split('T')[0]);
+    setFormPurchaseDate(getTodayDateStr());
     setFormNotes('');
     setIsModalOpen(true);
   };

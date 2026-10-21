@@ -1,4 +1,5 @@
 // Flock domain calculation utilities
+import { shiftDate } from './dateUtils';
 
 export function calculateChickenAge(hatchDateStr: string): {
   text: string;
@@ -70,20 +71,15 @@ export function calculateIncubationSchedule(settingDateStr: string): {
   statusText: string;
   percentComplete: number;
 } {
-  const setting = new Date(settingDateStr + 'T00:00:00');
+  const hatchDate = shiftDate(settingDateStr, 21);
+  const lockdownDate = shiftDate(settingDateStr, 18);
+  const candlingDay7 = shiftDate(settingDateStr, 7);
+  const candlingDay14 = shiftDate(settingDateStr, 14);
+
+  const settingParts = settingDateStr.split('-').map(Number);
+  const setting = new Date(settingParts[0], settingParts[1] - 1, settingParts[2], 12, 0, 0);
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
-  const addDays = (d: Date, days: number) => {
-    const copy = new Date(d);
-    copy.setDate(copy.getDate() + days);
-    return copy.toISOString().split('T')[0];
-  };
-
-  const hatchDate = addDays(setting, 21);
-  const lockdownDate = addDays(setting, 18);
-  const candlingDay7 = addDays(setting, 7);
-  const candlingDay14 = addDays(setting, 14);
+  now.setHours(12, 0, 0, 0);
 
   const diffMs = now.getTime() - setting.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;

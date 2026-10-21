@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Check, Sparkles, Edit3 } from 'lucide-react';
 import { Coop, Chicken, EggItem, EggLog, EggSize, EggColor, EggShape, EggCondition } from '../types/flock';
 import { EGG_SIZES, EGG_COLORS, EGG_SHAPES, CHICKEN_BREEDS } from '../data/breeds';
 import { EggVisual } from './EggVisual';
+import { getTodayDateStr, getCurrentTimeStr } from '../utils/dateUtils';
 
 interface EggLoggerModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface EggLoggerModalProps {
   chickens: Chicken[];
   defaultCoopId?: string;
   initialLog?: EggLog | null;
+  timezone?: string;
 }
 
 export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
@@ -22,11 +24,12 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   chickens,
   defaultCoopId,
   initialLog,
+  timezone,
 }) => {
   if (!isOpen) return null;
 
-  const [date, setDate] = useState<string>(() => initialLog?.date || new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState<string>(() => initialLog?.time || new Date().toTimeString().slice(0, 5));
+  const [date, setDate] = useState<string>(() => initialLog?.date || getTodayDateStr(timezone));
+  const [time, setTime] = useState<string>(() => initialLog?.time || getCurrentTimeStr(timezone));
   const [coopId, setCoopId] = useState<string>(() => initialLog?.coopId || (defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop'));
   const [weather, setWeather] = useState<'Sunny' | 'Partly Cloudy' | 'Rainy' | 'Cold Snap' | 'Heatwave'>(() => initialLog?.weather || 'Sunny');
   const [notes, setNotes] = useState<string>(() => initialLog?.notes || '');
@@ -60,7 +63,7 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   useEffect(() => {
     if (initialLog) {
       setDate(initialLog.date);
-      setTime(initialLog.time || new Date().toTimeString().slice(0, 5));
+      setTime(initialLog.time || getCurrentTimeStr(timezone));
       setCoopId(initialLog.coopId);
       setWeather(initialLog.weather || 'Sunny');
       setNotes(initialLog.notes || '');
@@ -73,8 +76,8 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
         setMode('quick');
       }
     } else {
-      setDate(new Date().toISOString().split('T')[0]);
-      setTime(new Date().toTimeString().slice(0, 5));
+      setDate(getTodayDateStr(timezone));
+      setTime(getCurrentTimeStr(timezone));
       setCoopId(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop');
       setWeather('Sunny');
       setNotes('');

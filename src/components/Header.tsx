@@ -20,7 +20,8 @@ import {
   Lock,
   ShieldCheck,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +35,8 @@ interface HeaderProps {
   onExportBackup: () => void;
   onOpenThemeModal: () => void;
   onOpenLoginModal: () => void;
+  onOpenTimeZoneModal?: () => void;
+  currentTimeZone?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,6 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
   onExportBackup,
   onOpenThemeModal,
   onOpenLoginModal,
+  onOpenTimeZoneModal,
+  currentTimeZone,
 }) => {
   const { theme, isDark, toggleDarkMode } = useTheme();
   const { user } = useAuth();
@@ -148,6 +153,18 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
 
+              {/* Time Zone settings trigger */}
+              {onOpenTimeZoneModal && (
+                <button
+                  onClick={onOpenTimeZoneModal}
+                  title={`Homestead Time Zone: ${currentTimeZone || 'Auto-Detected'}. Click to adjust.`}
+                  className="p-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Time zone settings"
+                >
+                  <Globe className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </button>
+              )}
+
               {/* Theme Picker trigger */}
               <button
                 onClick={onOpenThemeModal}
@@ -244,6 +261,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Palette className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               </button>
+
+              {/* Time Zone trigger mobile */}
+              {onOpenTimeZoneModal && (
+                <button
+                  onClick={onOpenTimeZoneModal}
+                  title="Time Zone Settings"
+                  className="p-1.5 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Time zone settings"
+                >
+                  <Globe className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                </button>
+              )}
 
               {/* Log Eggs Mobile Action */}
               <button

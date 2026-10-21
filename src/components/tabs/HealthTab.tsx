@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   HeartPulse, 
   ShieldCheck, 
@@ -23,6 +23,7 @@ import {
   SecurityChecklist 
 } from '../../types/flock';
 import { getWeatherCareAdvisories } from '../../utils/flockCalculations';
+import { getTodayDateStr } from '../../utils/dateUtils';
 
 interface HealthTabProps {
   healthRecords: HealthRecord[];
@@ -32,6 +33,8 @@ interface HealthTabProps {
   onSaveHealthRecord: (record: HealthRecord) => void;
   onSavePredatorIncident: (incident: PredatorIncident) => void;
   onSaveSecurityChecklist: (checklist: SecurityChecklist) => void;
+  initialSubTab?: 'health' | 'weather' | 'predators' | 'lockdown';
+  timezone?: string;
 }
 
 export const HealthTab: React.FC<HealthTabProps> = ({
@@ -42,8 +45,17 @@ export const HealthTab: React.FC<HealthTabProps> = ({
   onSaveHealthRecord,
   onSavePredatorIncident,
   onSaveSecurityChecklist,
+  initialSubTab = 'health',
+  timezone,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'health' | 'weather' | 'predators' | 'lockdown'>('health');
+  const [activeSubTab, setActiveSubTab] = useState<'health' | 'weather' | 'predators' | 'lockdown'>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
   const [selectedChickenFilter, setSelectedChickenFilter] = useState<string>('all');
   const [isHealthModalOpen, setIsHealthModalOpen] = useState<boolean>(false);
   const [isPredatorModalOpen, setIsPredatorModalOpen] = useState<boolean>(false);
@@ -70,7 +82,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
   const [predatorNotes, setPredatorNotes] = useState<string>('');
 
   // Night Lockdown Checklist State
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayDateStr(timezone);
   const existingTodayChecklist = securityChecklists.find(c => c.date === todayStr);
 
   const [doorConfirmed, setDoorConfirmed] = useState<boolean>(existingTodayChecklist?.automaticDoorConfirmed ?? true);
@@ -95,7 +107,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
     const newRecord: HealthRecord = {
       id: `health-${Date.now()}`,
       chickenId: targetChickenId,
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDateStr(timezone),
       type: recordType,
       title: recordTitle.trim(),
       symptoms: symptomTag.trim() ? [symptomTag.trim()] : undefined,
@@ -114,7 +126,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
     e.preventDefault();
     const incident: PredatorIncident = {
       id: `pred-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDateStr(timezone),
       timeOfDay: predatorTime,
       predatorType,
       severity: predatorSeverity,

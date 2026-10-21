@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { IncubationBatch, CandlingRecord } from '../../types/flock';
 import { calculateIncubationSchedule } from '../../utils/flockCalculations';
+import { getTodayDateStr } from '../../utils/dateUtils';
 
 interface IncubationTabProps {
   batches: IncubationBatch[];
@@ -35,7 +36,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
   // New batch form state
   const [batchName, setBatchName] = useState<string>('Spring Heritage Clutch');
   const [incubatorModel, setIncubatorModel] = useState<string>('Forced Air Digital Incubator');
-  const [settingDate, setSettingDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [settingDate, setSettingDate] = useState<string>(() => getTodayDateStr());
   const [eggsSetCount, setEggsSetCount] = useState<number>(12);
   const [targetTempF, setTargetTempF] = useState<number>(99.5);
   const [targetHumidity, setTargetHumidity] = useState<number>(48);
@@ -69,7 +70,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
       eggsSetCount: Number(eggsSetCount),
       targetTempF: Number(targetTempF),
       targetHumidityPercent: Number(targetHumidity),
-      dailyTurnings: [{ date: new Date().toISOString().split('T')[0], turnsCount: 3 }],
+      dailyTurnings: [{ date: getTodayDateStr(), turnsCount: 3 }],
       candlingRecords: [],
       status: 'incubating',
       notes: batchNotes.trim() || undefined,
@@ -81,7 +82,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
   };
 
   const handleLogTurning = (batch: IncubationBatch) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayDateStr();
     const turnings = [...batch.dailyTurnings];
     const todayIndex = turnings.findIndex(t => t.date === todayStr);
 
@@ -106,7 +107,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
 
     const record: CandlingRecord = {
       day: Number(candlingDay),
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDateStr(),
       fertileCount: Number(fertileCount),
       clearInfertileCount: Number(clearCount),
       bloodRingCount: Number(bloodRingCount),
@@ -160,7 +161,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
 
   const schedule = calculateIncubationSchedule(activeBatch.settingDate);
   const todayTurning = activeBatch.dailyTurnings.find(
-    t => t.date === new Date().toISOString().split('T')[0]
+    t => t.date === getTodayDateStr()
   );
   const turnsToday = todayTurning ? todayTurning.turnsCount : 0;
 

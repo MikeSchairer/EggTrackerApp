@@ -14,6 +14,7 @@ import {
   Calendar 
 } from 'lucide-react';
 import { FinancialTransaction, EggLog } from '../../types/flock';
+import { getTodayDateStr } from '../../utils/dateUtils';
 
 interface FinancesTabProps {
   transactions: FinancialTransaction[];
@@ -36,7 +37,7 @@ export const FinancesTab: React.FC<FinancesTabProps> = ({
   const [txAmount, setTxAmount] = useState<number>(12.00);
   const [txQty, setTxQty] = useState<number>(2);
   const [txUnitPrice, setTxUnitPrice] = useState<number>(6.00);
-  const [txDate, setTxDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [txDate, setTxDate] = useState<string>(() => getTodayDateStr());
   const [txNotes, setTxNotes] = useState<string>('');
 
   // Total egg count produced
@@ -85,7 +86,7 @@ export const FinancesTab: React.FC<FinancesTabProps> = ({
       setTxQty(1);
       setTxUnitPrice(25.50);
     }
-    setTxDate(new Date().toISOString().split('T')[0]);
+    setTxDate(getTodayDateStr());
     setTxNotes('');
     setIsModalOpen(true);
   };

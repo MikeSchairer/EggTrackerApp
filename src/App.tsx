@@ -18,7 +18,9 @@ import { PrintReportModal } from './components/PrintReportModal';
 import { ThemeModal } from './components/ThemeModal';
 import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
+import { TimeZoneModal } from './components/TimeZoneModal';
 import { Egg } from 'lucide-react';
+import { getTimeZone, setTimeZone, getTodayDateStr } from './utils/dateUtils';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -57,6 +59,20 @@ function FlockAppContent() {
   const [isPrintReportOpen, setIsPrintReportOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [isTimeZoneModalOpen, setIsTimeZoneModalOpen] = useState<boolean>(false);
+  const [healthInitialSubTab, setHealthInitialSubTab] = useState<'health' | 'weather' | 'predators' | 'lockdown'>('health');
+
+  const handleSaveTimeZone = (newTz: string) => {
+    setTimeZone(newTz);
+    setState(prev => {
+      const updated = { ...prev, timezone: newTz };
+      saveFlockState(updated);
+      if (user) {
+        saveUserFlockData(user.uid, updated).catch(console.error);
+      }
+      return updated;
+    });
+  };
 
   // Cloud sync flag
   const isCloudLoadedRef = useRef<boolean>(false);
@@ -250,7 +266,7 @@ function FlockAppContent() {
   };
 
   const handleCleanCoop = (coopId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayDateStr(state.timezone);
     setState(prev => ({
       ...prev,
       coops: prev.coops.map(c => (c.id === coopId ? { ...c, lastCleanedDate: todayStr } : c)),
@@ -418,6 +434,8 @@ function FlockAppContent() {
         onExportBackup={() => exportBackupJson(state)}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenTimeZoneModal={() => setIsTimeZoneModalOpen(true)}
+        currentTimeZone={state.timezone || getTimeZone()}
       />
 
       {/* Main Workspace Canvas */}
@@ -431,12 +449,18 @@ function FlockAppContent() {
             healthRecords={state.healthRecords || []}
             reminders={state.reminders || []}
             incubationBatches={state.incubationBatches || []}
+            timezone={state.timezone || getTimeZone()}
             onOpenLogEggs={() => handleOpenLogEggs()}
             onEditEggLog={handleOpenLogEggs}
             onOpenAddChicken={handleOpenAddChicken}
             onSelectCoop={(coopId) => setState(prev => ({ ...prev, selectedCoopId: coopId }))}
             onNavigateToTab={setActiveTab}
+            onSelectHealthSubTab={(subTab) => {
+              setHealthInitialSubTab(subTab);
+              setActiveTab('health');
+            }}
             onToggleReminder={handleToggleReminder}
+            onOpenTimeZoneModal={() => setIsTimeZoneModalOpen(true)}
           />
         )}
 
@@ -510,6 +534,8 @@ function FlockAppContent() {
             onSaveHealthRecord={handleSaveHealthRecord}
             onSavePredatorIncident={handleSavePredatorIncident}
             onSaveSecurityChecklist={handleSaveSecurityChecklist}
+            initialSubTab={healthInitialSubTab}
+            timezone={state.timezone || getTimeZone()}
           />
         )}
 
@@ -565,6 +591,7 @@ function FlockAppContent() {
           chickens={state.chickens}
           defaultCoopId={editingEggLog ? editingEggLog.coopId : (state.selectedCoopId !== 'all' ? state.selectedCoopId : undefined)}
           initialLog={editingEggLog}
+          timezone={state.timezone || getTimeZone()}
         />
       )}
 
@@ -614,6 +641,15 @@ function FlockAppContent() {
         <LoginModal
           isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
+        />
+      )}
+
+      {isTimeZoneModalOpen && (
+        <TimeZoneModal
+          isOpen={isTimeZoneModalOpen}
+          onClose={() => setIsTimeZoneModalOpen(false)}
+          currentTimeZone={state.timezone || getTimeZone()}
+          onSaveTimeZone={handleSaveTimeZone}
         />
       )}
     </div>

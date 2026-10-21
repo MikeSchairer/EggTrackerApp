@@ -18,11 +18,13 @@ import {
 } from 'lucide-react';
 import { Coop, Chicken, EggLog } from '../types/flock';
 import { EggVisual } from './EggVisual';
+import { getTodayDateStr, shiftDate, formatDisplayDate, parseDateSafe } from '../utils/dateUtils';
 
 interface DailyEggCountsBarGraphProps {
   eggLogs: EggLog[];
   coops: Coop[];
   chickens: Chicken[];
+  timezone?: string;
   onOpenLogEggs: () => void;
   onEditLog?: (log: EggLog) => void;
   onNavigateToEggsTab?: () => void;
@@ -34,6 +36,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
   eggLogs,
   coops,
   chickens,
+  timezone,
   onOpenLogEggs,
   onEditLog,
   onNavigateToEggsTab,
@@ -43,7 +46,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => getTodayDateStr(timezone), [timezone]);
   const activeLayersCount = useMemo(
     () => chickens.filter(c => c.lifeStage === 'active_layer').length,
     [chickens]
@@ -57,7 +60,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
     return eggLogs.filter(l => l.coopId === selectedCoopId);
   }, [eggLogs, selectedCoopId]);
 
-  // Determine end date for graph
+  // Determine end date for graph: never go past today unless a future log was saved
   const maxLogDate = useMemo(() => {
     return filteredLogs.reduce((max, l) => (l.date > max ? l.date : max), todayStr);
   }, [filteredLogs, todayStr]);
@@ -65,12 +68,9 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
   // Build daily data series
   const dailySeries = useMemo(() => {
     const series = [];
-    const endTime = new Date(maxLogDate).getTime();
-    const dayMs = 24 * 60 * 60 * 1000;
 
     for (let i = timeWindow - 1; i >= 0; i--) {
-      const d = new Date(endTime - i * dayMs);
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = shiftDate(maxLogDate, -i);
       const isToday = dStr === todayStr;
 
       const dayLogs = filteredLogs.filter(l => l.date === dStr);
@@ -83,9 +83,10 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
         coopBreakdown[l.coopId] = (coopBreakdown[l.coopId] || 0) + l.totalEggs;
       });
 
-      const dayOfWeekShort = d.toLocaleDateString('en-US', { weekday: 'short' });
-      const monthDayShort = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const dayNum = d.getDate();
+      const dayDateObj = parseDateSafe(dStr);
+      const dayOfWeekShort = formatDisplayDate(dStr, { weekday: 'short' });
+      const monthDayShort = formatDisplayDate(dStr, { month: 'short', day: 'numeric' });
+      const dayNum = dayDateObj.getDate();
 
       const activeDenominator = Math.max(1, activeLayersCount);
       const efficiencyPercent = Math.min(100, Math.round((totalEggs / activeDenominator) * 100));

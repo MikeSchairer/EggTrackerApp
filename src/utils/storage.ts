@@ -33,6 +33,7 @@ export const EMPTY_FLOCK_STATE: FlockState = {
   reminders: [],
   coopEnvironmentLogs: [],
   coopMaintenanceItems: [],
+  timezone: undefined,
 };
 
 export function loadFlockState(): FlockState {
@@ -77,6 +78,7 @@ export function loadFlockState(): FlockState {
           reminders: Array.isArray(parsed.reminders) ? parsed.reminders : [],
           coopEnvironmentLogs: Array.isArray(parsed.coopEnvironmentLogs) ? parsed.coopEnvironmentLogs : [],
           coopMaintenanceItems: Array.isArray(parsed.coopMaintenanceItems) ? parsed.coopMaintenanceItems : [],
+          timezone: typeof parsed.timezone === 'string' ? parsed.timezone : undefined,
         };
       }
     }

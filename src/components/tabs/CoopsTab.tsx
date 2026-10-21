@@ -28,6 +28,7 @@ import {
   CoopMaintenanceItem 
 } from '../../types/flock';
 import { CHICKEN_BREEDS } from '../../data/breeds';
+import { getTodayDateStr, getCurrentTimeStr, shiftDate } from '../../utils/dateUtils';
 
 interface CoopsTabProps {
   coops: Coop[];
@@ -117,8 +118,8 @@ export const CoopsTab: React.FC<CoopsTabProps> = ({
     const newLog: CoopEnvironmentLog = {
       id: `env-${Date.now()}`,
       coopId: activeCoop.id,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().slice(0, 5),
+      date: getTodayDateStr(),
+      time: getCurrentTimeStr(),
       temperatureF: envTemp,
       humidityPercent: envHumidity,
       ventilationLevel: envVentilation,
@@ -139,9 +140,8 @@ export const CoopsTab: React.FC<CoopsTabProps> = ({
     e.preventDefault();
     if (!activeCoop || !taskName.trim()) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const nextDate = new Date();
-    nextDate.setDate(nextDate.getDate() + taskFrequencyDays);
+    const todayStr = getTodayDateStr();
+    const nextDueDate = shiftDate(todayStr, taskFrequencyDays);
 
     const newTask: CoopMaintenanceItem = {
       id: `maint-${Date.now()}`,
@@ -150,7 +150,7 @@ export const CoopsTab: React.FC<CoopsTabProps> = ({
       category: taskCategory,
       frequencyDays: taskFrequencyDays,
       lastCompletedDate: todayStr,
-      nextDueDate: nextDate.toISOString().split('T')[0],
+      nextDueDate,
       completed: false,
     };
 

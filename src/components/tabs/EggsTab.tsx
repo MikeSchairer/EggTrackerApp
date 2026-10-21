@@ -22,6 +22,7 @@ import { EGG_SIZES, EGG_COLORS, EGG_SHAPES, CHICKEN_BREEDS } from '../../data/br
 import { EggVisual } from '../EggVisual';
 import { exportEggsCsv } from '../../utils/storage';
 import { calculateLayingRate, calculateEggFreshnessTier } from '../../utils/flockCalculations';
+import { getTodayDateStr } from '../../utils/dateUtils';
 
 interface EggsTabProps {
   coops: Coop[];
@@ -53,8 +54,8 @@ export const EggsTab: React.FC<EggsTabProps> = ({
 
   // New batch modal
   const [isNewBatchOpen, setIsNewBatchOpen] = useState<boolean>(false);
-  const [batchCode, setBatchCode] = useState<string>(`BATCH-${new Date().toISOString().split('T')[0].replace(/-/g, '').slice(2)}`);
-  const [batchDate, setBatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [batchCode, setBatchCode] = useState<string>(() => `BATCH-${getTodayDateStr().replace(/-/g, '').slice(2)}`);
+  const [batchDate, setBatchDate] = useState<string>(() => getTodayDateStr());
   const [batchCount, setBatchCount] = useState<number>(12);
   const [batchStorage, setBatchStorage] = useState<'countertop' | 'refrigerated'>('countertop');
   const [batchWashed, setBatchWashed] = useState<boolean>(false);
