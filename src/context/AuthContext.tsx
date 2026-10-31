@@ -162,14 +162,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithDemoAccount = async (
-    customEmail = 'Mike.Schairer@gmail.com',
-    customName = 'Mike Schairer'
+    customEmail?: string,
+    customName?: string
   ) => {
     setError(null);
+    const email = customEmail?.trim() || 'homesteader@flocker.app';
+    const name = customName?.trim() || 'Flock Owner';
+    const cleanId = email.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const demoUser: AppUser = {
-      uid: 'homestead-owner-mike',
-      email: customEmail,
-      displayName: customName,
+      uid: `demo_${cleanId}`,
+      email: email,
+      displayName: name,
       photoURL: null,
       isDemo: true,
     };

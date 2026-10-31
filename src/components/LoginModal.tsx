@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   X, 
   ShieldCheck, 
@@ -6,14 +6,17 @@ import {
   Cloud, 
   CheckCircle2, 
   LogOut, 
-  LogIn, 
   AlertCircle,
   Database,
   Smartphone,
-  Sparkles,
-  UserCheck
+  Mail,
+  User,
+  ChevronDown,
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { GoogleIcon } from './LoginScreen';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -22,8 +25,24 @@ interface LoginModalProps {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const { user, loading, signInWithGoogle, signInWithDemoAccount, signOut, error, clearError } = useAuth();
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await signInWithDemoAccount(email.trim(), name.trim() || 'Homesteader');
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
@@ -43,10 +62,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
-              {user ? 'Account & Security' : 'Secure Your Flock Data'}
+              {user ? 'Account & Security' : 'Sign in to Flocker'}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              {user ? 'Cloud Database Synced' : 'Sign in to protect and sync your records'}
+              {user ? 'Cloud Database Synced' : 'Sync your records securely across devices'}
             </p>
           </div>
         </div>
@@ -57,7 +76,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <div className="flex-1">
               <span>{error}</span>
             </div>
-            <button onClick={clearError} className="text-rose-500 font-bold hover:underline">
+            <button onClick={clearError} className="text-rose-500 font-bold hover:underline cursor-pointer">
               Dismiss
             </button>
           </div>
@@ -127,63 +146,110 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           /* If user is not logged in */
           <div className="space-y-4 text-xs">
             <p className="text-stone-600 dark:text-stone-300 leading-relaxed">
-              Sign in with your Google account to enable permanent cloud backup and multi-device synchronization for Flocker.
+              Connect your Google account to sync egg logs and flock analytics to the cloud across mobile and desktop.
             </p>
 
-            <div className="space-y-2.5">
-              <div className="flex items-start gap-2.5 p-2.5 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200/80 dark:border-stone-800">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-stone-800 dark:text-stone-200 block text-xs">Private Zero-Trust Storage</strong>
-                  <span className="text-[11px] text-stone-500 dark:text-stone-400">Strict Firebase security rules ensure only you can access your flock records.</span>
-                </div>
-              </div>
+            {/* Google themed button */}
+            <button
+              onClick={async () => {
+                await signInWithGoogle();
+                if (user) onClose();
+              }}
+              disabled={loading}
+              className="w-full group flex items-center justify-center gap-3 py-3 px-4 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-100 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 hover:bg-stone-50/90 dark:hover:bg-stone-750 hover:border-stone-400 dark:hover:border-stone-600 shadow-xs hover:shadow active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-stone-500" />
+                  <span>Connecting to Google...</span>
+                </>
+              ) : (
+                <>
+                  <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105" />
+                  <span>Sign in with Google</span>
+                </>
+              )}
+            </button>
 
-              <div className="flex items-start gap-2.5 p-2.5 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200/80 dark:border-stone-800">
-                <Smartphone className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-stone-800 dark:text-stone-200 block text-xs">Multi-Device Access</strong>
-                  <span className="text-[11px] text-stone-500 dark:text-stone-400">Log eggs at the coop on your phone, inspect growth charts on tablet or laptop.</span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2.5 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200/80 dark:border-stone-800">
-                <Cloud className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-stone-800 dark:text-stone-200 block text-xs">Safe from Browser Clearing</strong>
-                  <span className="text-[11px] text-stone-500 dark:text-stone-400">Never lose history or records when clearing browser cookies or history.</span>
-                </div>
-              </div>
+            {/* Divider */}
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-stone-200 dark:border-stone-800"></div>
+              <span className="flex-shrink mx-2 text-[10px] font-medium text-stone-400 uppercase tracking-wider">
+                or
+              </span>
+              <div className="flex-grow border-t border-stone-200 dark:border-stone-800"></div>
             </div>
 
-            <div className="pt-2 space-y-2">
+            {/* Email login option */}
+            <div>
               <button
-                onClick={async () => {
-                  await signInWithDemoAccount('Mike.Schairer@gmail.com', 'Mike Schairer');
-                  onClose();
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 shadow-md shadow-amber-700/20 transition-all cursor-pointer"
+                type="button"
+                onClick={() => setShowEmailForm(!showEmailForm)}
+                className="w-full flex items-center justify-between py-2 px-3 rounded-lg text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors cursor-pointer"
               >
-                <UserCheck className="w-4 h-4" />
-                <span>Sign In as Mike Schairer</span>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Sign in with Email</span>
+                </div>
+                {showEmailForm ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-stone-400" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+                )}
               </button>
 
-              <button
-                onClick={async () => {
-                  await signInWithGoogle();
-                }}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 transition-all cursor-pointer disabled:opacity-50"
-              >
-                <LogIn className="w-4 h-4 text-stone-500" />
-                <span>Sign in with Google (OAuth)</span>
-              </button>
+              {showEmailForm && (
+                <form onSubmit={handleEmailSignIn} className="mt-2 p-3 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2 animate-in fade-in duration-150">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-stone-500 dark:text-stone-400 mb-0.5">
+                      Name <span className="font-normal text-stone-400">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <User className="w-3 h-3 absolute left-2.5 top-2.5 text-stone-400" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your Name"
+                        className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
 
+                  <div>
+                    <label className="block text-[10px] font-semibold text-stone-500 dark:text-stone-400 mb-0.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-3 h-3 absolute left-2.5 top-2.5 text-stone-400" />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !email.trim()}
+                    className="w-full py-2 px-3 rounded-lg text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Signing in...' : 'Sign In with Email'}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="pt-1">
               <button
                 onClick={onClose}
                 className="w-full py-2 text-center text-xs font-semibold text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 transition-colors cursor-pointer"
               >
-                Continue in Guest Offline Mode
+                Continue in Guest Mode
               </button>
             </div>
           </div>
@@ -192,3 +258,4 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
