@@ -39,22 +39,38 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   const [quickCount, setQuickCount] = useState<number>(() => initialLog?.totalEggs || 1);
   const [quickBroken, setQuickBroken] = useState<number>(() => initialLog?.brokenCount || 0);
 
+  // Helper to extract default egg color and size from a chicken's profile, falling back to breed
+  const getHenDefaultEggColor = (hen: Chicken | undefined): EggColor => {
+    if (!hen) return 'terracotta_brown';
+    if (hen.defaultEggColor) return hen.defaultEggColor;
+    const breed = CHICKEN_BREEDS.find(b => b.id === hen.breedId);
+    return breed?.eggColorType || 'terracotta_brown';
+  };
+
+  const getHenDefaultEggSize = (hen: Chicken | undefined): EggSize => {
+    if (!hen) return 'large';
+    const breed = CHICKEN_BREEDS.find(b => b.id === hen.breedId);
+    return breed?.expectedEggSize || 'large';
+  };
+
   // Individual egg items
   const coopHens = chickens.filter(c => c.coopId === coopId && c.gender === 'hen');
+  const otherCoopHens = chickens.filter(c => c.coopId !== coopId && c.gender === 'hen');
 
   const [eggs, setEggs] = useState<EggItem[]>(() => {
     if (initialLog?.eggs && initialLog.eggs.length > 0) {
       return initialLog.eggs;
     }
+    const firstHen = coopHens[0];
     return [
       {
         id: `egg-${Date.now()}-1`,
-        size: 'large',
-        color: 'terracotta_brown',
+        size: getHenDefaultEggSize(firstHen),
+        color: getHenDefaultEggColor(firstHen),
         shape: 'classic_oval',
         weightGrams: 55,
         condition: 'clean_intact',
-        chickenId: coopHens[0]?.id || '',
+        chickenId: firstHen?.id || '',
       },
     ];
   });
@@ -76,9 +92,11 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
         setMode('quick');
       }
     } else {
+      const activeCoopId = defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop';
+      const firstHen = chickens.find(c => c.coopId === activeCoopId && c.gender === 'hen');
       setDate(getTodayDateStr(timezone));
       setTime(getCurrentTimeStr(timezone));
-      setCoopId(defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop');
+      setCoopId(activeCoopId);
       setWeather('Sunny');
       setNotes('');
       setMode('quick');
@@ -87,31 +105,28 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
       setEggs([
         {
           id: `egg-${Date.now()}-1`,
-          size: 'large',
-          color: 'terracotta_brown',
+          size: getHenDefaultEggSize(firstHen),
+          color: getHenDefaultEggColor(firstHen),
           shape: 'classic_oval',
           weightGrams: 55,
           condition: 'clean_intact',
-          chickenId: chickens.find(c => c.coopId === (defaultCoopId || coops[0]?.id) && c.gender === 'hen')?.id || '',
+          chickenId: firstHen?.id || '',
         },
       ]);
     }
-  }, [isOpen, initialLog, defaultCoopId, coops, chickens]);
+  }, [isOpen, initialLog, defaultCoopId, coops, chickens, timezone]);
 
   const handleAddEgg = () => {
-    // Default to hen's expected egg color if available
-    const nextHen = coopHens[eggs.length % coopHens.length];
-    let defaultColor: EggColor = 'terracotta_brown';
-    if (nextHen) {
-      const breed = CHICKEN_BREEDS.find(b => b.id === nextHen.breedId);
-      if (breed) defaultColor = breed.eggColorType;
-    }
+    // Default to hen's expected egg color and size from profile if available
+    const nextHen = coopHens[eggs.length % (coopHens.length || 1)];
+    const defaultColor = getHenDefaultEggColor(nextHen);
+    const defaultSize = getHenDefaultEggSize(nextHen);
 
     setEggs(prev => [
       ...prev,
       {
         id: `egg-${Date.now()}-${prev.length + 1}`,
-        size: 'large',
+        size: defaultSize,
         color: defaultColor,
         shape: 'classic_oval',
         weightGrams: 54,
@@ -129,14 +144,13 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
     setEggs(prev => prev.map((item, i) => {
       if (i !== index) return item;
       const updated = { ...item, ...updates };
-      // If chicken changed, auto-suggest the breed's egg color
-      if (updates.chickenId) {
-        const hen = chickens.find(c => c.id === updates.chickenId);
-        if (hen) {
-          const breed = CHICKEN_BREEDS.find(b => b.id === hen.breedId);
-          if (breed) {
-            updated.color = breed.eggColorType;
-            updated.size = breed.expectedEggSize;
+      // If chicken selected or changed, auto-apply the hen's default egg color from their profile!
+      if (updates.chickenId !== undefined) {
+        if (updates.chickenId) {
+          const hen = chickens.find(c => c.id === updates.chickenId);
+          if (hen) {
+            updated.color = getHenDefaultEggColor(hen);
+            updated.size = getHenDefaultEggSize(hen);
           }
         }
       }
@@ -155,15 +169,8 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
       // Auto generate egg items from coop hens or standard distribution
       for (let i = 0; i < quickCount; i++) {
         const hen = coopHens[i % (coopHens.length || 1)];
-        let color: EggColor = 'terracotta_brown';
-        let size: EggSize = 'large';
-        if (hen) {
-          const b = CHICKEN_BREEDS.find(br => br.id === hen.breedId);
-          if (b) {
-            color = b.eggColorType;
-            size = b.expectedEggSize;
-          }
-        }
+        const color = getHenDefaultEggColor(hen);
+        const size = getHenDefaultEggSize(hen);
         finalEggs.push({
           id: `egg-${Date.now()}-${i}`,
           size,
@@ -482,18 +489,45 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {/* Layer Hen Attribution */}
                       <div>
-                        <label className="text-[11px] font-semibold text-stone-600 dark:text-stone-300 block mb-0.5">Layer Bird (Optional)</label>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <label className="text-[11px] font-semibold text-stone-600 dark:text-stone-300 block">
+                            Layer Bird (Optional)
+                          </label>
+                          {egg.chickenId && (
+                            <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                              Profile color synced
+                            </span>
+                          )}
+                        </div>
                         <select
                           value={egg.chickenId || ''}
                           onChange={e => handleUpdateEgg(index, { chickenId: e.target.value || undefined })}
                           className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md px-2 py-1 text-xs text-stone-800 dark:text-stone-200"
                         >
                           <option value="">Unknown / Nest Box General</option>
-                          {coopHens.map(hen => (
-                            <option key={hen.id} value={hen.id}>
-                              {hen.name} ({hen.legBandId || 'No Band'})
-                            </option>
-                          ))}
+                          {coopHens.map(hen => {
+                            const colorId = getHenDefaultEggColor(hen);
+                            const colorMeta = EGG_COLORS.find(c => c.id === colorId);
+                            return (
+                              <option key={hen.id} value={hen.id}>
+                                {hen.name} ({hen.legBandId || 'No Band'}{colorMeta ? ` · ${colorMeta.label}` : ''})
+                              </option>
+                            );
+                          })}
+                          {otherCoopHens.length > 0 && (
+                            <optgroup label="Hens in Other Coops">
+                              {otherCoopHens.map(hen => {
+                                const colorId = getHenDefaultEggColor(hen);
+                                const colorMeta = EGG_COLORS.find(c => c.id === colorId);
+                                const otherCoop = coops.find(c => c.id === hen.coopId);
+                                return (
+                                  <option key={hen.id} value={hen.id}>
+                                    {hen.name} ({otherCoop?.name || 'Other Coop'}{colorMeta ? ` · ${colorMeta.label}` : ''})
+                                  </option>
+                                );
+                              })}
+                            </optgroup>
+                          )}
                         </select>
                       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Search, Filter, Scale, ChevronRight, Edit3, Trash2, ArrowRightLeft, Calendar, Info, Heart, ArrowDown, QrCode, ShieldCheck } from 'lucide-react';
 import { Coop, Chicken, LifeStage, WeightRecord, EggLog } from '../../types/flock';
-import { CHICKEN_BREEDS } from '../../data/breeds';
+import { CHICKEN_BREEDS, EGG_COLORS } from '../../data/breeds';
 import { calculateAgeInWeeks, formatAgeFriendly, getLatestWeight } from '../../utils/analytics';
 import { calculateChickenAge } from '../../utils/flockCalculations';
 import { GrowthWeighInModal } from '../GrowthWeighInModal';
@@ -255,6 +255,11 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                         </div>
                         <p className="text-xs text-stone-600 dark:text-stone-400 font-medium item-subtext">
                           {breed?.name || 'Heritage Bird'} · <span className="capitalize">{chicken.gender}</span> · <span className="text-amber-800 dark:text-amber-400 font-semibold">{age.text}</span>
+                          {chicken.gender === 'hen' && (
+                            <span className="text-stone-500 dark:text-stone-400">
+                              {' '}· {chicken.defaultEggColor ? (EGG_COLORS.find(c => c.id === chicken.defaultEggColor)?.label || breed?.eggColorDisplay) : breed?.eggColorDisplay}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -403,7 +408,9 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                 <div className="p-3.5 bg-stone-50 dark:bg-stone-800/80 rounded-xl border border-stone-200/80 dark:border-stone-700/80">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 block uppercase tracking-wider">Egg Shell Pigment</span>
                   <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block truncate mt-0.5">
-                    {activeBreed.eggColorDisplay}
+                    {activeBird.defaultEggColor 
+                      ? (EGG_COLORS.find(c => c.id === activeBird.defaultEggColor)?.label || activeBreed.eggColorDisplay)
+                      : activeBreed.eggColorDisplay}
                   </span>
                   <span className="text-[10px] text-stone-500 dark:text-stone-400 block mt-0.5">~{activeBreed.expectedAnnualEggs} eggs/yr</span>
                 </div>
