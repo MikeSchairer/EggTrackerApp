@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   activeTab: string;
@@ -207,6 +208,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <Download className="w-4 h-4" />
               </button>
 
+              <PWAInstallButton />
+
               <button
                 onClick={onOpenAddChicken}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
@@ -273,6 +276,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <Globe className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                 </button>
               )}
+
+              {/* PWA Home Screen Bookmark button mobile */}
+              <PWAInstallButton />
 
               {/* Log Eggs Mobile Action */}
               <button

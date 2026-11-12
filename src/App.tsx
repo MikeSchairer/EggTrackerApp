@@ -19,6 +19,7 @@ import { ThemeModal } from './components/ThemeModal';
 import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
 import { TimeZoneModal } from './components/TimeZoneModal';
+import { MobileSplashPage } from './components/MobileSplashPage';
 import { Egg } from 'lucide-react';
 import { getTimeZone, setTimeZone, getTodayDateStr } from './utils/dateUtils';
 
@@ -405,14 +406,42 @@ function FlockAppContent() {
   // Show sleek splash loading while resolving auth status
   if (loading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--theme-bg-canvas,#fafaf9)] dark:bg-stone-950 text-stone-900 dark:text-stone-100 p-4">
-        <div className="w-16 h-16 rounded-3xl bg-amber-600 text-white flex items-center justify-center shadow-xl shadow-amber-600/20 animate-pulse mb-4">
-          <Egg className="w-9 h-9" />
+      <div 
+        className="min-h-screen w-full flex flex-col items-center justify-between p-8 bg-stone-950 text-stone-100"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 50% 38%, rgba(217, 119, 6, 0.15) 0%, rgba(28, 25, 23, 0.95) 60%, #0c0a09 100%)',
+        }}
+      >
+        <div className="pt-6">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-950/70 text-amber-300 border border-amber-900/60 shadow-xs">
+            <span>Homestead Poultry &amp; Egg Manager</span>
+          </span>
         </div>
-        <p className="text-base font-bold text-stone-800 dark:text-stone-200">
-          Loading Flocker...
-        </p>
-        <span className="text-xs text-stone-400 mt-1">Connecting to your homestead</span>
+
+        <div className="flex flex-col items-center text-center space-y-3.5 my-auto animate-in zoom-in-95 duration-300">
+          <img
+            src="/pwa-192x192.png"
+            alt="Flocker Icon"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl shadow-2xl border-2 border-amber-500/30 ring-4 ring-amber-500/10 animate-pulse"
+          />
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+              Flocker
+            </h1>
+            <p className="text-xs text-stone-400">
+              Connecting to your homestead...
+            </p>
+          </div>
+          <div className="w-28 h-1 rounded-full bg-stone-800 overflow-hidden mt-2">
+            <div className="w-full h-full bg-gradient-to-r from-amber-600 to-amber-400 animate-pulse" />
+          </div>
+        </div>
+
+        <div className="pb-4 text-center">
+          <span className="text-[10px] uppercase tracking-widest text-stone-600 font-semibold">
+            Flocker Mobile App
+          </span>
+        </div>
       </div>
     );
   }
@@ -424,6 +453,9 @@ function FlockAppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--theme-bg-canvas)] dark:bg-stone-950 text-stone-900 dark:text-stone-100 selection:bg-amber-200 selection:text-amber-950 font-sans transition-colors duration-200 overflow-x-hidden w-full max-w-full">
+      {/* Mobile Home Screen Standalone Splash Page */}
+      <MobileSplashPage />
+
       {/* Universal Top Bar */}
       <Header
         activeTab={activeTab}
