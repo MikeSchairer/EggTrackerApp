@@ -179,6 +179,7 @@ export interface FeedItem {
   lowStockThresholdLbs: number;
   costPerBag: number;
   bagWeightLbs: number;
+  unit?: 'lbs' | 'cu. ft.';
   purchaseDate: string;
   notes?: string;
 }

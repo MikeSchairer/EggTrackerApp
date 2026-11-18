@@ -272,7 +272,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         actionLabel: 'Feed Inventory',
         onAction: () => onNavigateToTab('feed'),
         description: lowStockFeedItems.length > 0
-          ? `⚠️ ${lowStockFeedItems[0].name} is low on stock (${lowStockFeedItems[0].currentQuantityLbs} lbs remaining). Refill hopper.`
+          ? `⚠️ ${lowStockFeedItems[0].name} is low on stock (${lowStockFeedItems[0].currentQuantityLbs} ${lowStockFeedItems[0].unit || (lowStockFeedItems[0].category === 'bedding' ? 'cu. ft.' : 'lbs')} remaining). Refill supply.`
           : `Verify layer pellet hoppers flow freely (${feedDaysLeft > 0 ? `${feedDaysLeft} days supply remaining` : 'Check stock'}).`,
       },
       {

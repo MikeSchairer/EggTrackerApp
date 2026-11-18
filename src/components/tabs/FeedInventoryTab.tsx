@@ -121,6 +121,30 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
     setIsModalOpen(true);
   };
 
+  const getUnit = (category: FeedItem['category'], explicitUnit?: FeedItem['unit']) => {
+    if (explicitUnit) return explicitUnit;
+    return category === 'bedding' ? 'cu. ft.' : 'lbs';
+  };
+
+  const handleCategoryChange = (newCategory: FeedItem['category']) => {
+    const prevWasBedding = formCategory === 'bedding';
+    const nextIsBedding = newCategory === 'bedding';
+    setFormCategory(newCategory);
+
+    // Adjust sensible default sizes when switching between feed (lbs) and bedding (cu. ft.) on a new item
+    if (!editingItem && prevWasBedding !== nextIsBedding) {
+      if (nextIsBedding) {
+        if (formBagWeight === 50) setFormBagWeight(8);
+        if (formQty === 50) setFormQty(8);
+        if (formThreshold === 15) setFormThreshold(2);
+      } else {
+        if (formBagWeight === 8) setFormBagWeight(50);
+        if (formQty === 8) setFormQty(50);
+        if (formThreshold === 2) setFormThreshold(15);
+      }
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
@@ -134,6 +158,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
       lowStockThresholdLbs: Number(formThreshold),
       costPerBag: Number(formCost),
       bagWeightLbs: Number(formBagWeight),
+      unit: getUnit(formCategory),
       purchaseDate: formPurchaseDate,
       notes: formNotes.trim() || undefined,
     };
@@ -142,8 +167,8 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
     setIsModalOpen(false);
   };
 
-  const handleQuickAdjust = (item: FeedItem, amountLbs: number) => {
-    const updatedQty = Math.max(0, Math.round((item.currentQuantityLbs + amountLbs) * 10) / 10);
+  const handleQuickAdjust = (item: FeedItem, amount: number) => {
+    const updatedQty = Math.max(0, Math.round((item.currentQuantityLbs + amount) * 10) / 10);
     onSaveFeedItem({
       ...item,
       currentQuantityLbs: updatedQty,
@@ -196,7 +221,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
             </h4>
             <p className="text-amber-800 dark:text-amber-300">
               The following supplies have dropped below your safety threshold:{' '}
-              <strong>{lowStockItems.map(i => `${i.name} (${i.currentQuantityLbs} lbs)`).join(', ')}</strong>.
+              <strong>{lowStockItems.map(i => `${i.name} (${i.currentQuantityLbs} ${getUnit(i.category, i.unit)})`).join(', ')}</strong>.
             </p>
           </div>
         </div>
@@ -292,6 +317,8 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
         {filteredItems.map(item => {
           const isLow = item.currentQuantityLbs <= item.lowStockThresholdLbs;
           const percentFull = Math.min(100, Math.round((item.currentQuantityLbs / Math.max(1, item.bagWeightLbs)) * 100));
+          const unit = getUnit(item.category, item.unit);
+          const stepAmount = unit === 'cu. ft.' ? 1 : 5;
 
           return (
             <div
@@ -329,7 +356,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-stone-500 dark:text-stone-400">Current Stock</span>
                     <span className="font-bold font-mono text-stone-900 dark:text-stone-100">
-                      {item.currentQuantityLbs} / {item.bagWeightLbs} lbs ({percentFull}%)
+                      {item.currentQuantityLbs} / {item.bagWeightLbs} {unit} ({percentFull}%)
                     </span>
                   </div>
                   <div className="w-full h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
@@ -354,7 +381,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
                   </div>
                   <div>
                     <span>Threshold:</span>{' '}
-                    <strong className="text-stone-800 dark:text-stone-200 font-mono">{item.lowStockThresholdLbs} lbs</strong>
+                    <strong className="text-stone-800 dark:text-stone-200 font-mono">{item.lowStockThresholdLbs} {unit}</strong>
                   </div>
                   <div className="col-span-2 flex items-center gap-1 text-[10px]">
                     <Calendar className="w-3 h-3" />
@@ -374,20 +401,20 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => handleQuickAdjust(item, -5)}
+                    onClick={() => handleQuickAdjust(item, -stepAmount)}
                     disabled={item.currentQuantityLbs <= 0}
                     className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors disabled:opacity-40"
-                    title="Deduct 5 lbs used"
+                    title={`Deduct ${stepAmount} ${unit} used`}
                   >
-                    -5 lbs
+                    -{stepAmount} {unit}
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleQuickAdjust(item, 5)}
+                    onClick={() => handleQuickAdjust(item, stepAmount)}
                     className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors"
-                    title="Add 5 lbs"
+                    title={`Add ${stepAmount} ${unit}`}
                   >
-                    +5 lbs
+                    +{stepAmount} {unit}
                   </button>
                   <button
                     type="button"
@@ -451,7 +478,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
                   required
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
-                  placeholder="e.g. Organic Layer Pellets 16%"
+                  placeholder={formCategory === 'bedding' ? 'e.g. Kiln-Dried Pine Shavings' : 'e.g. Organic Layer Pellets 16%'}
                   className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-xs text-stone-900 dark:text-stone-100 focus:outline-hidden focus:border-amber-600"
                 />
               </div>
@@ -463,7 +490,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
                   </label>
                   <select
                     value={formCategory}
-                    onChange={e => setFormCategory(e.target.value as FeedItem['category'])}
+                    onChange={e => handleCategoryChange(e.target.value as FeedItem['category'])}
                     className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-xs text-stone-900 dark:text-stone-100 focus:outline-hidden focus:border-amber-600"
                   >
                     <option value="layer_feed">Layer Feed (16-18%)</option>
@@ -493,7 +520,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-                    Current Lbs
+                    {formCategory === 'bedding' ? 'Current cu. ft.' : 'Current Lbs'}
                   </label>
                   <input
                     type="number"
@@ -508,12 +535,12 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-                    Full Bag Lbs
+                    {formCategory === 'bedding' ? 'Full Bag cu. ft.' : 'Full Bag Lbs'}
                   </label>
                   <input
                     type="number"
-                    step="1"
-                    min="1"
+                    step={formCategory === 'bedding' ? '0.5' : '1'}
+                    min={formCategory === 'bedding' ? '0.5' : '1'}
                     required
                     value={formBagWeight}
                     onChange={e => setFormBagWeight(Number(e.target.value))}
@@ -523,12 +550,12 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-                    Low Alert (Lbs)
+                    {formCategory === 'bedding' ? 'Low Alert (cu. ft.)' : 'Low Alert (Lbs)'}
                   </label>
                   <input
                     type="number"
-                    step="1"
-                    min="1"
+                    step={formCategory === 'bedding' ? '0.5' : '1'}
+                    min={formCategory === 'bedding' ? '0.5' : '1'}
                     required
                     value={formThreshold}
                     onChange={e => setFormThreshold(Number(e.target.value))}
