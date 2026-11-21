@@ -65,12 +65,13 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   // Individual egg items
   const coopHens = chickens.filter(c => c.coopId === coopId && c.gender === 'hen');
   const otherCoopHens = chickens.filter(c => c.coopId !== coopId && c.gender === 'hen');
+  const coopLayingHens = coopHens.filter(c => c.lifeStage === 'active_layer');
 
   const [eggs, setEggs] = useState<EggItem[]>(() => {
     if (initialLog?.eggs && initialLog.eggs.length > 0) {
       return initialLog.eggs;
     }
-    const firstHen = coopHens[0];
+    const firstHen = coopLayingHens[0] || coopHens[0];
     const initialSize = getHenDefaultEggSize(firstHen);
     const sizeMeta = EGG_SIZES.find(s => s.id === initialSize);
     const initialWeight = sizeMeta?.sampleGrams || 54;
@@ -105,7 +106,9 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
       }
     } else {
       const activeCoopId = defaultCoopId && defaultCoopId !== 'all' ? defaultCoopId : coops[0]?.id || 'main-coop';
-      const firstHen = chickens.find(c => c.coopId === activeCoopId && c.gender === 'hen');
+      const firstHen =
+        chickens.find(c => c.coopId === activeCoopId && c.gender === 'hen' && c.lifeStage === 'active_layer') ||
+        chickens.find(c => c.coopId === activeCoopId && c.gender === 'hen');
       const initialSize = getHenDefaultEggSize(firstHen);
       const sizeMeta = EGG_SIZES.find(s => s.id === initialSize);
       setDate(getTodayDateStr(timezone));
@@ -131,8 +134,9 @@ export const EggLoggerModal: React.FC<EggLoggerModalProps> = ({
   }, [isOpen, initialLog, defaultCoopId, coops, chickens, timezone]);
 
   const handleAddEgg = () => {
-    // Default to hen's expected egg color and size from profile if available
-    const nextHen = coopHens[eggs.length % (coopHens.length || 1)];
+    // Default to laying hen's expected egg color and size from profile if available
+    const preferredPool = coopLayingHens.length > 0 ? coopLayingHens : coopHens;
+    const nextHen = preferredPool[eggs.length % (preferredPool.length || 1)];
     const defaultColor = getHenDefaultEggColor(nextHen);
     const defaultSize = getHenDefaultEggSize(nextHen);
     const sizeMeta = EGG_SIZES.find(s => s.id === defaultSize);

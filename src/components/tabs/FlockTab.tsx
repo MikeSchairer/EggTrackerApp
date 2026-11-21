@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Search, Filter, Scale, ChevronRight, Edit3, Trash2, ArrowRightLeft, Calendar, Info, Heart, ArrowDown, QrCode, ShieldCheck } from 'lucide-react';
 import { Coop, Chicken, LifeStage, WeightRecord, EggLog } from '../../types/flock';
-import { CHICKEN_BREEDS, EGG_COLORS } from '../../data/breeds';
+import { CHICKEN_BREEDS, EGG_COLORS, formatLifeStageLabel } from '../../data/breeds';
 import { calculateAgeInWeeks, formatAgeFriendly, getLatestWeight } from '../../utils/analytics';
 import { calculateChickenAge } from '../../utils/flockCalculations';
 import { GrowthWeighInModal } from '../GrowthWeighInModal';
@@ -172,10 +172,12 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                     <option value="chick">Chicks</option>
                     <option value="pullet">Pullets / Juveniles</option>
                     <option value="point_of_lay">Point of Lay</option>
+                    <option value="pre_lay_adult">Pre-Lay Adults (Not Yet Laying)</option>
                     <option value="active_layer">Active Layers</option>
                     <option value="broody">Broody</option>
                     <option value="molting">Molting</option>
                     <option value="retired">Retired</option>
+                    <option value="rooster">Roosters</option>
                   </select>
                 )}
 
@@ -372,8 +374,8 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">{activeBird.name}</h2>
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 capitalize">
-                        {activeBird.lifeStage.replace('_', ' ')}
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700">
+                        {formatLifeStageLabel(activeBird.lifeStage)}
                       </span>
                     </div>
                     <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">

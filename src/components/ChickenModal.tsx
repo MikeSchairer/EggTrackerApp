@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Check, Camera, Image as ImageIcon, Trash2, Egg, Sparkles } from 'lucide-react';
 import { Coop, Chicken, LifeStage, EggColor } from '../types/flock';
-import { CHICKEN_BREEDS, EGG_COLORS } from '../data/breeds';
+import { CHICKEN_BREEDS, EGG_COLORS, LIFE_STAGES } from '../data/breeds';
 import { getTodayDateStr } from '../utils/dateUtils';
 
 interface ChickenModalProps {
@@ -394,14 +394,11 @@ export const ChickenModal: React.FC<ChickenModalProps> = ({
                 onChange={e => setLifeStage(e.target.value as LifeStage)}
                 className="w-full text-xs font-medium text-stone-800 dark:text-stone-200 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 focus:outline-hidden focus:border-amber-700 dark:focus:border-amber-500 focus:bg-white dark:focus:bg-stone-900 transition-colors"
               >
-                <option value="chick">Chick (0-6 weeks)</option>
-                <option value="pullet">Pullet / Juvenile (6-18 weeks)</option>
-                <option value="point_of_lay">Point of Lay (18-24 weeks)</option>
-                <option value="active_layer">Active Layer (Prime Adult)</option>
-                <option value="broody">Broody (Sitting on eggs)</option>
-                <option value="molting">Molting (Feather regeneration)</option>
-                <option value="retired">Retired / Senior Pet</option>
-                <option value="rooster">Flock Guardian / Rooster</option>
+                {LIFE_STAGES.map(stage => (
+                  <option key={stage.id} value={stage.id}>
+                    {stage.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

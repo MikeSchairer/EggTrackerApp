@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { X, Printer, Download, QrCode, CheckCircle2, ShieldCheck, Feather } from 'lucide-react';
 import { Chicken, BreedInfo, Coop } from '../types/flock';
 import { calculateChickenAge } from '../utils/flockCalculations';
+import { formatLifeStageLabel } from '../data/breeds';
 import { ChickenAvatar } from './ChickenAvatar';
 
 interface ChickenQrModalProps {
@@ -170,8 +171,8 @@ export const ChickenQrModal: React.FC<ChickenQrModalProps> = ({
 
                   <div className="bg-white dark:bg-stone-900/60 p-1.5 rounded-md border border-stone-200/80 dark:border-stone-750">
                     <span className="text-[9px] font-bold text-stone-400 block uppercase">Life Stage</span>
-                    <strong className="text-stone-900 dark:text-stone-100 capitalize">
-                      {chicken.lifeStage.replace(/_/g, ' ')}
+                    <strong className="text-stone-900 dark:text-stone-100">
+                      {formatLifeStageLabel(chicken.lifeStage)}
                     </strong>
                   </div>
                 </div>

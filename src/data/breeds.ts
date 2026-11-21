@@ -1,4 +1,4 @@
-import { BreedInfo } from '../types/flock';
+import { BreedInfo, LifeStage } from '../types/flock';
 
 export const CHICKEN_BREEDS: BreedInfo[] = [
   {
@@ -594,3 +594,19 @@ export const EGG_SHAPES: { id: string; label: string; description: string }[] = 
   { id: 'torpedo', label: 'Torpedo / Cylindrical', description: 'Uniform straight side profile' },
   { id: 'ridged_textured', label: 'Textured / Ridged', description: 'Calcium banding or ring texture' },
 ];
+
+export const LIFE_STAGES: { id: LifeStage; label: string; shortLabel: string; description: string }[] = [
+  { id: 'chick', label: 'Chick (0-6 weeks)', shortLabel: 'Chick', description: 'Brooder & early down stage' },
+  { id: 'pullet', label: 'Pullet / Juvenile (6-18 weeks)', shortLabel: 'Pullet', description: 'Growing young female' },
+  { id: 'point_of_lay', label: 'Point of Lay (18-24 weeks)', shortLabel: 'Point of Lay', description: 'Developing comb & nearing first egg' },
+  { id: 'pre_lay_adult', label: 'Pre-Lay Adult (Not Yet Laying / After Winter)', shortLabel: 'Pre-Lay Adult', description: 'Full-grown hen that has not started laying yet (e.g., waiting until after winter)' },
+  { id: 'active_layer', label: 'Active Layer (Prime Adult)', shortLabel: 'Active Layer', description: 'Currently in active egg production' },
+  { id: 'broody', label: 'Broody (Sitting on eggs)', shortLabel: 'Broody', description: 'Temporarily pausing lay to sit on clutch' },
+  { id: 'molting', label: 'Molting (Feather regeneration)', shortLabel: 'Molting', description: 'Pausing lay to regrow feathers' },
+  { id: 'retired', label: 'Retired / Senior Pet', shortLabel: 'Retired', description: 'Past laying age' },
+  { id: 'rooster', label: 'Flock Guardian / Rooster', shortLabel: 'Rooster', description: 'Male flock guardian' },
+];
+
+export const formatLifeStageLabel = (stage: LifeStage): string => {
+  return LIFE_STAGES.find(s => s.id === stage)?.shortLabel || stage.replace(/_/g, ' ');
+};

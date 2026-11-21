@@ -45,7 +45,7 @@ import { getTodayDateStr, getCurrentDateTimePreview, formatDisplayDate } from '.
 import { EggVisual } from '../EggVisual';
 import { DailyEggCountsBarGraph } from '../DailyEggCountsBarGraph';
 import { ChickenAvatar } from '../ChickenAvatar';
-import { CHICKEN_BREEDS } from '../../data/breeds';
+import { CHICKEN_BREEDS, formatLifeStageLabel } from '../../data/breeds';
 import { useCustomization } from '../../context/CustomizationContext';
 import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
@@ -1173,7 +1173,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             <span className="font-mono tabular-nums font-medium text-stone-700 dark:text-stone-300">
               {summary.totalFlockCount - summary.activeLayersCount}
             </span>
-            <span>growing pullets & chicks</span>
+            <span>non-laying, pre-lay & growing</span>
           </div>
         </div>
         )}
@@ -1459,7 +1459,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                               <span className="text-[11px] text-stone-500 dark:text-stone-400">({breed?.name})</span>
                             </div>
                             <p className="text-[10px] text-stone-400 mt-0.5">
-                              {chicken.lifeStage.replace('_', ' ')} · {latestWeight.ageWeeks} wks old
+                              {formatLifeStageLabel(chicken.lifeStage)} · {latestWeight.ageWeeks} wks old
                             </p>
                           </div>
                         </div>

@@ -33,7 +33,7 @@ export type EggCondition =
   | 'incubated' 
   | 'misshapen';
 
-export type LifeStage = 'chick' | 'pullet' | 'point_of_lay' | 'active_layer' | 'broody' | 'molting' | 'retired' | 'rooster';
+export type LifeStage = 'chick' | 'pullet' | 'point_of_lay' | 'pre_lay_adult' | 'active_layer' | 'broody' | 'molting' | 'retired' | 'rooster';
 
 export type BirdStatus = 'active' | 'deceased' | 'sold' | 'rehomed';
 

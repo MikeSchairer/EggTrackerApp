@@ -27,7 +27,7 @@ import {
   CoopEnvironmentLog, 
   CoopMaintenanceItem 
 } from '../../types/flock';
-import { CHICKEN_BREEDS } from '../../data/breeds';
+import { CHICKEN_BREEDS, formatLifeStageLabel } from '../../data/breeds';
 import { getTodayDateStr, getCurrentTimeStr, shiftDate } from '../../utils/dateUtils';
 import { useCustomization } from '../../context/CustomizationContext';
 import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
@@ -454,7 +454,7 @@ export const CoopsTab: React.FC<CoopsTabProps> = ({
                               </div>
 
                               <div className="pt-2 border-t border-stone-200 dark:border-stone-700/60 flex items-center justify-between text-[11px] text-stone-600 dark:text-stone-300">
-                                <span className="capitalize">{chicken.lifeStage.replace('_', ' ')}</span>
+                                <span>{formatLifeStageLabel(chicken.lifeStage)}</span>
 
                                 {coops.length > 1 && (
                                   <div className="flex items-center gap-1">
