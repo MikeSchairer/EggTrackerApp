@@ -28,6 +28,9 @@ interface DailyEggCountsBarGraphProps {
   onOpenLogEggs: () => void;
   onEditLog?: (log: EggLog) => void;
   onNavigateToEggsTab?: () => void;
+  showWindowAndFilters?: boolean;
+  showSummaryCards?: boolean;
+  showLegend?: boolean;
 }
 
 export type TimeWindow = 7 | 14 | 30;
@@ -40,6 +43,9 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
   onOpenLogEggs,
   onEditLog,
   onNavigateToEggsTab,
+  showWindowAndFilters = true,
+  showSummaryCards = true,
+  showLegend = true,
 }) => {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(14);
   const [selectedCoopId, setSelectedCoopId] = useState<string>('all');
@@ -188,6 +194,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
         </div>
 
         {/* Action Controls & Filters */}
+        {showWindowAndFilters && (
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Time window selector pills */}
           <div className="inline-flex items-center p-1 bg-stone-100 dark:bg-stone-800/80 rounded-xl border border-stone-200 dark:border-stone-700">
@@ -251,9 +258,11 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
             <span className="hidden sm:inline">Log Eggs</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* 2. Key Metrics Strip for Selected Window */}
+      {showSummaryCards && (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3 sm:p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-800">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400">
@@ -327,6 +336,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
           </p>
         </div>
       </div>
+      )}
 
       {/* 3. Bar Graph Visual Canvas */}
       {periodTotalEggs === 0 && eggLogs.length === 0 ? (
@@ -354,6 +364,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
       ) : (
         <div className="space-y-4">
           {/* Legend and Helper */}
+          {showLegend && (
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500 dark:text-stone-400">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
@@ -377,6 +388,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
               Click any bar to inspect date details
             </span>
           </div>
+          )}
 
           {/* Chart Frame */}
           <div className="relative pt-6 pb-2">
@@ -404,7 +416,7 @@ export const DailyEggCountsBarGraph: React.FC<DailyEggCountsBarGraphProps> = ({
                 </div>
 
                 {/* Average Reference Line */}
-                {periodAverage > 0 && (
+                {showLegend && periodAverage > 0 && (
                   <div
                     className="absolute left-0 right-0 border-t-2 border-dashed border-amber-500/70 dark:border-amber-400/60 z-10 pointer-events-none transition-all"
                     style={{ bottom: `calc(28px + ${(avgHeightPercent / 100) * 196}px)` }}

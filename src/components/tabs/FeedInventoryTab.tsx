@@ -22,6 +22,8 @@ import {
   STANDARD_DAILY_FEED_LBS_PER_HEN 
 } from '../../utils/flockCalculations';
 import { getTodayDateStr } from '../../utils/dateUtils';
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
 interface FeedInventoryTabProps {
   feedItems: FeedItem[];
@@ -38,6 +40,7 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
   onSaveFeedItem,
   onDeleteFeedItem,
 }) => {
+  const { isItemVisible } = useCustomization();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<FeedItem | null>(null);
@@ -202,253 +205,317 @@ export const FeedInventoryTab: React.FC<FeedInventoryTabProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={handleOpenNew}
-          className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-xl shadow-xs transition-colors flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add Supply / Feed Bag
-        </button>
-      </div>
-
-      {/* Low-stock Warning Banner */}
-      {lowStockItems.length > 0 && (
-        <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-xs">
-          <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-xs space-y-1">
-            <h4 className="font-bold text-amber-950 dark:text-amber-100">
-              Low Stock Warning: {lowStockItems.length} {lowStockItems.length === 1 ? 'item needs' : 'items need'} restocking
-            </h4>
-            <p className="text-amber-800 dark:text-amber-300">
-              The following supplies have dropped below your safety threshold:{' '}
-              <strong>{lowStockItems.map(i => `${i.name} (${i.currentQuantityLbs} ${getUnit(i.category, i.unit)})`).join(', ')}</strong>.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Consumption & Financial Summary KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Main Feed Stock */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-            <span>Total Feed On Hand</span>
-            <Package className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">{totalMainFeedLbs}</span>
-            <span className="text-xs font-semibold text-stone-500">lbs</span>
-          </div>
-          <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-            ~{daysRemaining} days remaining ({activeChickens.length} active birds)
-          </p>
-        </div>
-
-        {/* Daily Consumption Rate */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-            <span>Daily Consumption</span>
-            <TrendingDown className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">{consumption.lbsPerDay}</span>
-            <span className="text-xs font-semibold text-stone-500">lbs/day</span>
-          </div>
-          <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-            Based on ~0.25 lb / hen / day standard
-          </p>
-        </div>
-
-        {/* Monthly Cost Per Hen */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-            <span>Feed Cost / Hen</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">${monthlyFeedCostPerChicken.toFixed(2)}</span>
-            <span className="text-xs font-semibold text-stone-500">/mo</span>
-          </div>
-          <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-            Avg ~${avgCostPerLb.toFixed(2)}/lb complete grain
-          </p>
-        </div>
-
-        {/* Feed Cost Per Dozen Eggs */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-            <span>Feed Cost / Dozen Eggs</span>
-            <Sparkles className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">${feedCostPerDozen.toFixed(2)}</span>
-            <span className="text-xs font-semibold text-stone-500">/dozen</span>
-          </div>
-          <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-            High feed-to-egg conversion efficiency
-          </p>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs">
-        {[
-          { id: 'all', label: `All Supplies (${feedItems.length})` },
-          { id: 'feed', label: 'Main Feeds & Grains' },
-          { id: 'supplements', label: 'Oyster Shell & Grit' },
-          { id: 'bedding', label: 'Bedding Shavings' },
-        ].map(tab => (
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <TabCustomizeControls tabId="feed" />
           <button
-            key={tab.id}
-            onClick={() => setSelectedCategory(tab.id)}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
-              selectedCategory === tab.id
-                ? 'bg-amber-700 text-white dark:bg-amber-600'
-                : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
+            onClick={handleOpenNew}
+            className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-xl shadow-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer"
           >
-            {tab.label}
+            <Plus className="w-4 h-4" />
+            Add Supply / Feed Bag
           </button>
-        ))}
+        </div>
       </div>
 
-      {/* Supplies Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredItems.map(item => {
-          const isLow = item.currentQuantityLbs <= item.lowStockThresholdLbs;
-          const percentFull = Math.min(100, Math.round((item.currentQuantityLbs / Math.max(1, item.bagWeightLbs)) * 100));
-          const unit = getUnit(item.category, item.unit);
-          const stepAmount = unit === 'cu. ft.' ? 1 : 5;
-
-          return (
-            <div
-              key={item.id}
-              className={`p-4 rounded-xl border transition-all bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between ${
-                isLow
-                  ? 'border-amber-400 dark:border-amber-700/80 ring-1 ring-amber-400/30'
-                  : 'border-stone-200 dark:border-stone-800 hover:border-stone-300'
-              }`}
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
-                      {getCategoryLabel(item.category)}
-                    </span>
-                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
-                      {item.name}
-                    </h3>
-                    {item.brand && (
-                      <p className="text-xs text-stone-500 dark:text-stone-400">{item.brand}</p>
-                    )}
-                  </div>
-
-                  {isLow && (
-                    <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 flex items-center gap-1 shrink-0">
-                      <AlertTriangle className="w-3 h-3" />
-                      Low Stock
-                    </span>
+      <CustomizableSectionList
+        tabId="feed"
+        renderSection={(sectionId) => {
+          if (sectionId === 'low_stock_alert') {
+            if (lowStockItems.length === 0) return null;
+            const showBreakdown = isItemVisible('feed', 'low_stock_alert', 'itemBreakdown');
+            return (
+              <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-xs">
+                <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs space-y-1">
+                  <h4 className="font-bold text-amber-950 dark:text-amber-100">
+                    Low Stock Warning: {lowStockItems.length} {lowStockItems.length === 1 ? 'item needs' : 'items need'} restocking
+                  </h4>
+                  {showBreakdown && (
+                    <p className="text-amber-800 dark:text-amber-300">
+                      The following supplies have dropped below your safety threshold:{' '}
+                      <strong>{lowStockItems.map(i => `${i.name} (${i.currentQuantityLbs} ${getUnit(i.category, i.unit)})`).join(', ')}</strong>.
+                    </p>
                   )}
                 </div>
+              </div>
+            );
+          }
 
-                {/* Progress bar */}
-                <div className="mt-4 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-stone-500 dark:text-stone-400">Current Stock</span>
-                    <span className="font-bold font-mono text-stone-900 dark:text-stone-100">
-                      {item.currentQuantityLbs} / {item.bagWeightLbs} {unit} ({percentFull}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        isLow
-                          ? 'bg-amber-500'
-                          : percentFull > 50
-                          ? 'bg-emerald-600 dark:bg-emerald-500'
-                          : 'bg-amber-600'
-                      }`}
-                      style={{ width: `${percentFull}%` }}
-                    />
-                  </div>
+          if (sectionId === 'kpis') {
+            const showTotal = isItemVisible('feed', 'kpis', 'totalFeedOnHand');
+            const showDaily = isItemVisible('feed', 'kpis', 'dailyConsumption');
+            const showHenCost = isItemVisible('feed', 'kpis', 'costPerHen');
+            const showDozenCost = isItemVisible('feed', 'kpis', 'costPerDozen');
+            const visibleCount = [showTotal, showDaily, showHenCost, showDozenCost].filter(Boolean).length;
+            if (visibleCount === 0) {
+              return (
+                <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                  All feed summary KPIs are hidden. Use Customize to re-enable metrics.
                 </div>
+              );
+            }
+            const gridCols =
+              visibleCount === 1 ? 'grid-cols-1' : visibleCount === 2 ? 'grid-cols-1 sm:grid-cols-2' : visibleCount === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4';
+            return (
+              <div className={`grid ${gridCols} gap-4`}>
+                {showTotal && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                      <span>Total Feed On Hand</span>
+                      <Package className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">{totalMainFeedLbs}</span>
+                      <span className="text-xs font-semibold text-stone-500">lbs</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                      ~{daysRemaining} days remaining ({activeChickens.length} active birds)
+                    </p>
+                  </div>
+                )}
 
-                {/* Specs row */}
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-stone-500 dark:text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-800">
-                  <div>
-                    <span>Cost / Bag:</span>{' '}
-                    <strong className="text-stone-800 dark:text-stone-200 font-mono">${item.costPerBag.toFixed(2)}</strong>
+                {showDaily && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                      <span>Daily Consumption</span>
+                      <TrendingDown className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">{consumption.lbsPerDay}</span>
+                      <span className="text-xs font-semibold text-stone-500">lbs/day</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+                      Based on ~0.25 lb / hen / day standard
+                    </p>
                   </div>
-                  <div>
-                    <span>Threshold:</span>{' '}
-                    <strong className="text-stone-800 dark:text-stone-200 font-mono">{item.lowStockThresholdLbs} {unit}</strong>
-                  </div>
-                  <div className="col-span-2 flex items-center gap-1 text-[10px]">
-                    <Calendar className="w-3 h-3" />
-                    <span>Purchased: {item.purchaseDate}</span>
-                  </div>
-                </div>
+                )}
 
-                {item.notes && (
-                  <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400 italic line-clamp-2">
-                    {item.notes}
-                  </p>
+                {showHenCost && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                      <span>Feed Cost / Hen</span>
+                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">${monthlyFeedCostPerChicken.toFixed(2)}</span>
+                      <span className="text-xs font-semibold text-stone-500">/mo</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+                      Avg ~${avgCostPerLb.toFixed(2)}/lb complete grain
+                    </p>
+                  </div>
+                )}
+
+                {showDozenCost && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                      <span>Feed Cost / Dozen Eggs</span>
+                      <Sparkles className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">${feedCostPerDozen.toFixed(2)}</span>
+                      <span className="text-xs font-semibold text-stone-500">/dozen</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                      High feed-to-egg conversion efficiency
+                    </p>
+                  </div>
                 )}
               </div>
+            );
+          }
 
-              {/* Bottom Actions */}
-              <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between">
-                <div className="flex items-center gap-1">
+          if (sectionId === 'category_filters') {
+            const showCounts = isItemVisible('feed', 'category_filters', 'itemCounts');
+            return (
+              <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs">
+                {[
+                  { id: 'all', label: showCounts ? `All Supplies (${feedItems.length})` : 'All Supplies' },
+                  { id: 'feed', label: 'Main Feeds & Grains' },
+                  { id: 'supplements', label: 'Oyster Shell & Grit' },
+                  { id: 'bedding', label: 'Bedding Shavings' },
+                ].map(tab => (
                   <button
-                    type="button"
-                    onClick={() => handleQuickAdjust(item, -stepAmount)}
-                    disabled={item.currentQuantityLbs <= 0}
-                    className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors disabled:opacity-40"
-                    title={`Deduct ${stepAmount} ${unit} used`}
+                    key={tab.id}
+                    onClick={() => setSelectedCategory(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
+                      selectedCategory === tab.id
+                        ? 'bg-amber-700 text-white dark:bg-amber-600'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                    }`}
                   >
-                    -{stepAmount} {unit}
+                    {tab.label}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickAdjust(item, stepAmount)}
-                    className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors"
-                    title={`Add ${stepAmount} ${unit}`}
-                  >
-                    +{stepAmount} {unit}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickAdjust(item, item.bagWeightLbs)}
-                    className="px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded border border-emerald-200 dark:border-emerald-800 transition-colors"
-                    title="Add full new bag"
-                  >
-                    +New Bag
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(item)}
-                    className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
-                    title="Edit item"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteFeedItem(item.id)}
-                    className="p-1.5 text-stone-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                    title="Delete item"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                ))}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          }
+
+          if (sectionId === 'supplies_grid') {
+            const showBrand = isItemVisible('feed', 'supplies_grid', 'brandLabel');
+            const showLowBadge = isItemVisible('feed', 'supplies_grid', 'lowStockBadge');
+            const showProgress = isItemVisible('feed', 'supplies_grid', 'progressBar');
+            const showSpecs = isItemVisible('feed', 'supplies_grid', 'costAndThreshold');
+            const showDate = isItemVisible('feed', 'supplies_grid', 'purchaseDate');
+            const showNotes = isItemVisible('feed', 'supplies_grid', 'notes');
+            const showQuickAdjust = isItemVisible('feed', 'supplies_grid', 'quickAdjustButtons');
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredItems.map(item => {
+                  const isLow = item.currentQuantityLbs <= item.lowStockThresholdLbs;
+                  const percentFull = Math.min(100, Math.round((item.currentQuantityLbs / Math.max(1, item.bagWeightLbs)) * 100));
+                  const unit = getUnit(item.category, item.unit);
+                  const stepAmount = unit === 'cu. ft.' ? 1 : 5;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-xl border transition-all bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between ${
+                        isLow
+                          ? 'border-amber-400 dark:border-amber-700/80 ring-1 ring-amber-400/30'
+                          : 'border-stone-200 dark:border-stone-800 hover:border-stone-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
+                              {getCategoryLabel(item.category)}
+                            </span>
+                            <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
+                              {item.name}
+                            </h3>
+                            {showBrand && item.brand && (
+                              <p className="text-xs text-stone-500 dark:text-stone-400">{item.brand}</p>
+                            )}
+                          </div>
+
+                          {showLowBadge && isLow && (
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 flex items-center gap-1 shrink-0">
+                              <AlertTriangle className="w-3 h-3" />
+                              Low Stock
+                            </span>
+                          )}
+                        </div>
+
+                        {showProgress && (
+                          <div className="mt-4 space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-stone-500 dark:text-stone-400">Current Stock</span>
+                              <span className="font-bold font-mono text-stone-900 dark:text-stone-100">
+                                {item.currentQuantityLbs} / {item.bagWeightLbs} {unit} ({percentFull}%)
+                              </span>
+                            </div>
+                            <div className="w-full h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  isLow
+                                    ? 'bg-amber-500'
+                                    : percentFull > 50
+                                    ? 'bg-emerald-600 dark:bg-emerald-500'
+                                    : 'bg-amber-600'
+                                }`}
+                                style={{ width: `${percentFull}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {(showSpecs || showDate) && (
+                          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-stone-500 dark:text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-800">
+                            {showSpecs && (
+                              <>
+                                <div>
+                                  <span>Cost / Bag:</span>{' '}
+                                  <strong className="text-stone-800 dark:text-stone-200 font-mono">${item.costPerBag.toFixed(2)}</strong>
+                                </div>
+                                <div>
+                                  <span>Threshold:</span>{' '}
+                                  <strong className="text-stone-800 dark:text-stone-200 font-mono">{item.lowStockThresholdLbs} {unit}</strong>
+                                </div>
+                              </>
+                            )}
+                            {showDate && (
+                              <div className="col-span-2 flex items-center gap-1 text-[10px]">
+                                <Calendar className="w-3 h-3" />
+                                <span>Purchased: {item.purchaseDate}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {showNotes && item.notes && (
+                          <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400 italic line-clamp-2">
+                            {item.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between">
+                        {showQuickAdjust ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAdjust(item, -stepAmount)}
+                              disabled={item.currentQuantityLbs <= 0}
+                              className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors disabled:opacity-40 cursor-pointer"
+                              title={`Deduct ${stepAmount} ${unit} used`}
+                            >
+                              -{stepAmount} {unit}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAdjust(item, stepAmount)}
+                              className="px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded border border-stone-200 dark:border-stone-700 transition-colors cursor-pointer"
+                              title={`Add ${stepAmount} ${unit}`}
+                            >
+                              +{stepAmount} {unit}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAdjust(item, item.bagWeightLbs)}
+                              className="px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
+                              title="Add full new bag"
+                            >
+                              +New Bag
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-mono text-stone-500">
+                            {item.currentQuantityLbs} {unit}
+                          </span>
+                        )}
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(item)}
+                            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                            title="Edit item"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteFeedItem(item.id)}
+                            className="p-1.5 text-stone-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
+                            title="Delete item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          return null;
+        }}
+      />
 
       {/* Add / Edit Feed Item Modal */}
       {isModalOpen && (

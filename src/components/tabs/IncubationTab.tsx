@@ -16,6 +16,8 @@ import {
 import { IncubationBatch, CandlingRecord } from '../../types/flock';
 import { calculateIncubationSchedule } from '../../utils/flockCalculations';
 import { getTodayDateStr } from '../../utils/dateUtils';
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
 interface IncubationTabProps {
   batches: IncubationBatch[];
@@ -26,6 +28,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
   batches,
   onSaveBatch,
 }) => {
+  const { isItemVisible } = useCustomization();
   const [selectedBatchId, setSelectedBatchId] = useState<string>(
     batches.length > 0 ? batches[0].id : ''
   );
@@ -184,7 +187,9 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <TabCustomizeControls tabId="incubation" />
+
           {batches.length > 1 && (
             <select
               value={activeBatch.id}
@@ -199,7 +204,7 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
 
           <button
             onClick={() => setIsNewBatchOpen(true)}
-            className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 rounded-xl shadow-xs transition-colors flex items-center gap-2 shrink-0"
+            className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 rounded-xl shadow-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             New Batch
@@ -207,277 +212,338 @@ export const IncubationTab: React.FC<IncubationTabProps> = ({
         </div>
       </div>
 
-      {/* Main 21-Day Countdown & Progress Card */}
-      <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
-                {activeBatch.batchName}
-              </h2>
-              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                activeBatch.status === 'completed'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                  : schedule.currentDay >= 18
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
-              }`}>
-                {schedule.statusText}
-              </span>
-            </div>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-              Set on <strong>{activeBatch.settingDate}</strong> · Incubator: {activeBatch.incubatorModel || 'Standard Incubator'} · Total: <strong>{activeBatch.eggsSetCount} eggs</strong>
-            </p>
-          </div>
+      <CustomizableSectionList
+        tabId="incubation"
+        renderSection={(sectionId) => {
+          if (sectionId === 'countdown') {
+            const showMeta = isItemVisible('incubation', 'countdown', 'batchMeta');
+            const showHatch = isItemVisible('incubation', 'countdown', 'hatchEstimate');
+            const showProgress = isItemVisible('incubation', 'countdown', 'progressBar');
+            const showMilestones = isItemVisible('incubation', 'countdown', 'milestonesStrip');
 
-          <div className="text-right">
-            <span className="text-xs text-stone-400 block uppercase font-bold">Estimated Hatch Day</span>
-            <span className="text-xl font-extrabold font-mono text-amber-700 dark:text-amber-400">
-              {schedule.hatchDate}
-            </span>
-            <p className="text-[11px] text-stone-500 dark:text-stone-400">
-              {schedule.daysRemaining > 0 ? `${schedule.daysRemaining} days remaining` : 'Hatch window open'}
-            </p>
-          </div>
-        </div>
-
-        {/* 21-Day Visual Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-stone-500 dark:text-stone-400 font-medium">Incubation Cycle Timeline</span>
-            <span className="font-bold font-mono text-stone-900 dark:text-stone-100">
-              Day {schedule.currentDay} / 21 ({schedule.percentComplete}%)
-            </span>
-          </div>
-
-          <div className="w-full h-3 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden flex">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-700 transition-all duration-500 rounded-full"
-              style={{ width: `${schedule.percentComplete}%` }}
-            />
-          </div>
-
-          {/* Key Milestones Strip */}
-          <div className="grid grid-cols-4 gap-2 pt-2 text-[11px] text-stone-600 dark:text-stone-400">
-            <div className={`p-2 rounded-lg border ${schedule.currentDay >= 1 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
-              <strong className="block text-stone-900 dark:text-stone-100">Day 1: Set Date</strong>
-              <span>{activeBatch.settingDate}</span>
-            </div>
-            <div className={`p-2 rounded-lg border ${schedule.currentDay >= 7 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
-              <strong className="block text-stone-900 dark:text-stone-100">Day 7: Candling 1</strong>
-              <span>{schedule.candlingDay7}</span>
-            </div>
-            <div className={`p-2 rounded-lg border ${schedule.currentDay >= 14 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
-              <strong className="block text-stone-900 dark:text-stone-100">Day 14: Candling 2</strong>
-              <span>{schedule.candlingDay14}</span>
-            </div>
-            <div className={`p-2 rounded-lg border ${schedule.currentDay >= 18 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
-              <strong className="block text-stone-900 dark:text-stone-100">Day 18: Lockdown</strong>
-              <span>{schedule.lockdownDate}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Target Parameters & Turning Controls Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Temperature */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Target Temperature</span>
-            <Thermometer className="w-4 h-4 text-red-500" />
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
-              {activeBatch.targetTempF}°F
-            </span>
-            <span className="text-xs text-stone-500">(37.5°C)</span>
-          </div>
-          <p className="text-[11px] text-stone-500">
-            Forced air standard: 99.5°F constant. (Still air: 101.5°F at egg level).
-          </p>
-        </div>
-
-        {/* Humidity */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Target Humidity</span>
-            <Droplets className="w-4 h-4 text-blue-500" />
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
-              {schedule.currentDay >= 18 ? '65%–70%' : `${activeBatch.targetHumidityPercent}%`}
-            </span>
-          </div>
-          <p className="text-[11px] text-stone-500">
-            {schedule.currentDay >= 18
-              ? 'Lockdown: Elevate humidity to 65-70% to soften chick egg membranes.'
-              : 'Days 1-17: Maintain 45-50% for optimal air cell evaporation.'}
-          </p>
-        </div>
-
-        {/* Turning Counter */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-stone-500">
-              <span>Today's Turning Log</span>
-              <RotateCw className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
-                {turnsToday}
-              </span>
-              <span className="text-xs font-semibold text-stone-500">turns logged today</span>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            {schedule.currentDay >= 18 ? (
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
-                ⛔ Lockdown Active: Do not turn eggs!
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleLogTurning(activeBatch)}
-                className="w-full py-1.5 px-3 text-xs font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-              >
-                <RotateCw className="w-3.5 h-3.5" />
-                +1 Egg Turn Logged
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Candling Logs & Hatch Outcomes Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Candling & Fertility Card */}
-        <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                <Eye className="w-4 h-4 text-amber-600" />
-                Fertility Checks & Candling Logs
-              </h3>
-              <p className="text-xs text-stone-500">
-                Verify spider veins on Day 7 and air cell development on Day 14.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsCandlingModalOpen(true)}
-              className="px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Log Candling
-            </button>
-          </div>
-
-          {activeBatch.candlingRecords.length === 0 ? (
-            <div className="p-4 bg-stone-50 dark:bg-stone-850 rounded-xl text-center text-xs text-stone-500">
-              No candling logs recorded yet. Recommended check on Day 7 ({schedule.candlingDay7}).
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeBatch.candlingRecords.map(rec => (
-                <div
-                  key={rec.day}
-                  className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/60 dark:bg-stone-850/60 space-y-2 text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-stone-900 dark:text-stone-100">
-                      Day {rec.day} Candling Inspection ({rec.date})
-                    </span>
-                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                      {rec.fertileCount} Fertile / Developing
-                    </span>
+            return (
+              <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                        {activeBatch.batchName}
+                      </h2>
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                        activeBatch.status === 'completed'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : schedule.currentDay >= 18
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                          : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+                      }`}>
+                        {schedule.statusText}
+                      </span>
+                    </div>
+                    {showMeta && (
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        Set on <strong>{activeBatch.settingDate}</strong> · Incubator: {activeBatch.incubatorModel || 'Standard Incubator'} · Total: <strong>{activeBatch.eggsSetCount} eggs</strong>
+                      </p>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-[11px]">
-                    <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
-                      <span className="text-stone-400 block">Fertile:</span>
-                      <strong className="text-emerald-700 dark:text-emerald-400 font-mono">{rec.fertileCount}</strong>
+                  {showHatch && (
+                    <div className="text-right">
+                      <span className="text-xs text-stone-400 block uppercase font-bold">Estimated Hatch Day</span>
+                      <span className="text-xl font-extrabold font-mono text-amber-700 dark:text-amber-400">
+                        {schedule.hatchDate}
+                      </span>
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                        {schedule.daysRemaining > 0 ? `${schedule.daysRemaining} days remaining` : 'Hatch window open'}
+                      </p>
                     </div>
-                    <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
-                      <span className="text-stone-400 block">Clear (Infertile):</span>
-                      <strong className="text-stone-700 dark:text-stone-300 font-mono">{rec.clearInfertileCount}</strong>
-                    </div>
-                    <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
-                      <span className="text-stone-400 block">Quitters/Rings:</span>
-                      <strong className="text-red-700 dark:text-red-400 font-mono">{rec.bloodRingCount + rec.quitterCount}</strong>
-                    </div>
-                  </div>
-
-                  {rec.notes && (
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400 italic">
-                      "{rec.notes}"
-                    </p>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Hatch Outcomes Card */}
-        <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                <Award className="w-4 h-4 text-emerald-600" />
-                Hatch Outcomes & Success Rate
-              </h3>
-              <p className="text-xs text-stone-500">
-                Final clutch audit of successfully hatched chicks.
-              </p>
-            </div>
+                {(showProgress || showMilestones) && (
+                  <div className="space-y-2">
+                    {showProgress && (
+                      <>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-500 dark:text-stone-400 font-medium">Incubation Cycle Timeline</span>
+                          <span className="font-bold font-mono text-stone-900 dark:text-stone-100">
+                            Day {schedule.currentDay} / 21 ({schedule.percentComplete}%)
+                          </span>
+                        </div>
 
-            <button
-              onClick={() => setIsHatchModalOpen(true)}
-              className="px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {activeBatch.outcomes ? 'Edit Hatch' : 'Record Hatch Results'}
-            </button>
-          </div>
+                        <div className="w-full h-3 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden flex">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-500 to-amber-700 transition-all duration-500 rounded-full"
+                            style={{ width: `${schedule.percentComplete}%` }}
+                          />
+                        </div>
+                      </>
+                    )}
 
-          {activeBatch.outcomes ? (
-            <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-900 dark:text-emerald-100">
-                  Hatch Completed!
-                </span>
-                <span className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
-                  {hatchRate}% Success
-                </span>
+                    {showMilestones && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px] text-stone-600 dark:text-stone-400">
+                        <div className={`p-2 rounded-lg border ${schedule.currentDay >= 1 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
+                          <strong className="block text-stone-900 dark:text-stone-100">Day 1: Set Date</strong>
+                          <span>{activeBatch.settingDate}</span>
+                        </div>
+                        <div className={`p-2 rounded-lg border ${schedule.currentDay >= 7 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
+                          <strong className="block text-stone-900 dark:text-stone-100">Day 7: Candling 1</strong>
+                          <span>{schedule.candlingDay7}</span>
+                        </div>
+                        <div className={`p-2 rounded-lg border ${schedule.currentDay >= 14 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
+                          <strong className="block text-stone-900 dark:text-stone-100">Day 14: Candling 2</strong>
+                          <span>{schedule.candlingDay14}</span>
+                        </div>
+                        <div className={`p-2 rounded-lg border ${schedule.currentDay >= 18 ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30' : 'border-stone-200 dark:border-stone-800'}`}>
+                          <strong className="block text-stone-900 dark:text-stone-100">Day 18: Lockdown</strong>
+                          <span>{schedule.lockdownDate}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+            );
+          }
 
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
-                  <span className="text-stone-400 text-[10px] block uppercase">Chicks Hatched</span>
-                  <strong className="text-emerald-700 font-mono text-base">{activeBatch.outcomes.hatched}</strong>
+          if (sectionId === 'parameters') {
+            const showTemp = isItemVisible('incubation', 'parameters', 'temperatureCard');
+            const showHum = isItemVisible('incubation', 'parameters', 'humidityCard');
+            const showTurn = isItemVisible('incubation', 'parameters', 'turningCard');
+            const visibleCount = [showTemp, showHum, showTurn].filter(Boolean).length;
+            if (visibleCount === 0) {
+              return (
+                <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                  All target parameter cards are hidden. Use Customize to show parameters.
                 </div>
-                <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
-                  <span className="text-stone-400 text-[10px] block uppercase">Unhatched</span>
-                  <strong className="text-stone-700 font-mono text-base">{activeBatch.outcomes.unhatched}</strong>
-                </div>
-                <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
-                  <span className="text-stone-400 text-[10px] block uppercase">Pipped Unhatched</span>
-                  <strong className="text-stone-700 font-mono text-base">{activeBatch.outcomes.pippedNotHatched}</strong>
-                </div>
+              );
+            }
+            const gridCols = visibleCount === 1 ? 'grid-cols-1' : visibleCount === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3';
+            return (
+              <div className={`grid ${gridCols} gap-4`}>
+                {showTemp && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Target Temperature</span>
+                      <Thermometer className="w-4 h-4 text-red-500" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
+                        {activeBatch.targetTempF}°F
+                      </span>
+                      <span className="text-xs text-stone-500">(37.5°C)</span>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      Forced air standard: 99.5°F constant. (Still air: 101.5°F at egg level).
+                    </p>
+                  </div>
+                )}
+
+                {showHum && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Target Humidity</span>
+                      <Droplets className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
+                        {schedule.currentDay >= 18 ? '65%–70%' : `${activeBatch.targetHumidityPercent}%`}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      {schedule.currentDay >= 18
+                        ? 'Lockdown: Elevate humidity to 65-70% to soften chick egg membranes.'
+                        : 'Days 1-17: Maintain 45-50% for optimal air cell evaporation.'}
+                    </p>
+                  </div>
+                )}
+
+                {showTurn && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-stone-500">
+                        <span>Today's Turning Log</span>
+                        <RotateCw className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="mt-1 flex items-baseline gap-1.5">
+                        <span className="text-2xl font-bold font-mono text-stone-900 dark:text-stone-100">
+                          {turnsToday}
+                        </span>
+                        <span className="text-xs font-semibold text-stone-500">turns logged today</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      {schedule.currentDay >= 18 ? (
+                        <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
+                          ⛔ Lockdown Active: Do not turn eggs!
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleLogTurning(activeBatch)}
+                          className="w-full py-1.5 px-3 text-xs font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <RotateCw className="w-3.5 h-3.5" />
+                          +1 Egg Turn Logged
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="p-4 bg-stone-50 dark:bg-stone-850 rounded-xl text-center text-xs text-stone-500 space-y-2">
-              <p>Hatch results will be recorded upon Day 21 emergence.</p>
-              <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold block">
-                Expected hatch date: {schedule.hatchDate}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+            );
+          }
+
+          if (sectionId === 'candling_and_hatch') {
+            const showCandling = isItemVisible('incubation', 'candling_and_hatch', 'candlingCard');
+            const showCandlingBreakdown = isItemVisible('incubation', 'candling_and_hatch', 'candlingBreakdown');
+            const showHatchCard = isItemVisible('incubation', 'candling_and_hatch', 'hatchOutcomesCard');
+            const visibleCount = [showCandling, showHatchCard].filter(Boolean).length;
+            if (visibleCount === 0) {
+              return (
+                <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                  Both candling and hatch outcome cards are hidden. Use Customize to show them.
+                </div>
+              );
+            }
+            return (
+              <div className={`grid grid-cols-1 ${visibleCount === 2 ? 'lg:grid-cols-2' : ''} gap-6`}>
+                {showCandling && (
+                  <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-amber-600" />
+                          Fertility Checks & Candling Logs
+                        </h3>
+                        <p className="text-xs text-stone-500">
+                          Verify spider veins on Day 7 and air cell development on Day 14.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setIsCandlingModalOpen(true)}
+                        className="px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Log Candling
+                      </button>
+                    </div>
+
+                    {activeBatch.candlingRecords.length === 0 ? (
+                      <div className="p-4 bg-stone-50 dark:bg-stone-850 rounded-xl text-center text-xs text-stone-500">
+                        No candling logs recorded yet. Recommended check on Day 7 ({schedule.candlingDay7}).
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {activeBatch.candlingRecords.map(rec => (
+                          <div
+                            key={rec.day}
+                            className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/60 dark:bg-stone-850/60 space-y-2 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-stone-900 dark:text-stone-100">
+                                Day {rec.day} Candling Inspection ({rec.date})
+                              </span>
+                              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                {rec.fertileCount} Fertile / Developing
+                              </span>
+                            </div>
+
+                            {showCandlingBreakdown && (
+                              <div className="grid grid-cols-3 gap-2 text-[11px]">
+                                <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
+                                  <span className="text-stone-400 block">Fertile:</span>
+                                  <strong className="text-emerald-700 dark:text-emerald-400 font-mono">{rec.fertileCount}</strong>
+                                </div>
+                                <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
+                                  <span className="text-stone-400 block">Clear (Infertile):</span>
+                                  <strong className="text-stone-700 dark:text-stone-300 font-mono">{rec.clearInfertileCount}</strong>
+                                </div>
+                                <div className="p-1.5 bg-white dark:bg-stone-800 rounded border border-stone-200/80 dark:border-stone-700">
+                                  <span className="text-stone-400 block">Quitters/Rings:</span>
+                                  <strong className="text-red-700 dark:text-red-400 font-mono">{rec.bloodRingCount + rec.quitterCount}</strong>
+                                </div>
+                              </div>
+                            )}
+
+                            {rec.notes && (
+                              <p className="text-[11px] text-stone-500 dark:text-stone-400 italic">
+                                "{rec.notes}"
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showHatchCard && (
+                  <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                          <Award className="w-4 h-4 text-emerald-600" />
+                          Hatch Outcomes & Success Rate
+                        </h3>
+                        <p className="text-xs text-stone-500">
+                          Final clutch audit of successfully hatched chicks.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setIsHatchModalOpen(true)}
+                        className="px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {activeBatch.outcomes ? 'Edit Hatch' : 'Record Hatch Results'}
+                      </button>
+                    </div>
+
+                    {activeBatch.outcomes ? (
+                      <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-emerald-900 dark:text-emerald-100">
+                            Hatch Completed!
+                          </span>
+                          <span className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
+                            {hatchRate}% Success
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
+                            <span className="text-stone-400 text-[10px] block uppercase">Chicks Hatched</span>
+                            <strong className="text-emerald-700 font-mono text-base">{activeBatch.outcomes.hatched}</strong>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
+                            <span className="text-stone-400 text-[10px] block uppercase">Unhatched</span>
+                            <strong className="text-stone-700 font-mono text-base">{activeBatch.outcomes.unhatched}</strong>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200/80">
+                            <span className="text-stone-400 text-[10px] block uppercase">Pipped Unhatched</span>
+                            <strong className="text-stone-700 font-mono text-base">{activeBatch.outcomes.pippedNotHatched}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-stone-50 dark:bg-stone-850 rounded-xl text-center text-xs text-stone-500 space-y-2">
+                        <p>Hatch results will be recorded upon Day 21 emergence.</p>
+                        <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold block">
+                          Expected hatch date: {schedule.hatchDate}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return null;
+        }}
+      />
 
       {/* New Incubation Batch Modal */}
       {isNewBatchOpen && (

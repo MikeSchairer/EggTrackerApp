@@ -25,6 +25,9 @@ import {
 import { getWeatherCareAdvisories } from '../../utils/flockCalculations';
 import { getTodayDateStr } from '../../utils/dateUtils';
 
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
+
 interface HealthTabProps {
   healthRecords: HealthRecord[];
   chickens: Chicken[];
@@ -48,6 +51,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
   initialSubTab = 'health',
   timezone,
 }) => {
+  const { isItemVisible } = useCustomization();
   const [activeSubTab, setActiveSubTab] = useState<'health' | 'weather' | 'predators' | 'lockdown'>(initialSubTab);
 
   useEffect(() => {
@@ -156,6 +160,423 @@ export const HealthTab: React.FC<HealthTabProps> = ({
     setTimeout(() => setChecklistSaved(false), 3000);
   };
 
+  const showNavCounts = isItemVisible('health', 'sub_nav', 'counts');
+  const showBirdFilter = isItemVisible('health', 'active_panel', 'birdFilter');
+  const showSymptomsAndTreatment = isItemVisible('health', 'active_panel', 'symptomsAndTreatment');
+  const showWithdrawalAlert = isItemVisible('health', 'active_panel', 'withdrawalAlert');
+  const showRecordNotes = isItemVisible('health', 'active_panel', 'recordNotes');
+  const showWeatherSimulator = isItemVisible('health', 'active_panel', 'weatherSimulator');
+  const showPredatorActions = isItemVisible('health', 'active_panel', 'predatorActions');
+  const showLockdownDescriptions = isItemVisible('health', 'active_panel', 'lockdownDescriptions');
+
+  const renderSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'sub_nav':
+        return (
+          <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs">
+            {[
+              { id: 'health', label: showNavCounts ? `Health Dossiers (${healthRecords.length})` : 'Health Dossiers', icon: HeartPulse },
+              { id: 'weather', label: 'Weather-Aware Care', icon: CloudSun },
+              { id: 'predators', label: showNavCounts ? `Predator Logs (${predatorIncidents.length})` : 'Predator Logs', icon: ShieldAlert },
+              { id: 'lockdown', label: 'Night Lockdown Checklist', icon: Lock },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeSubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSubTab(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                    isActive
+                      ? 'bg-amber-700 text-white dark:bg-amber-600'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        );
+
+      case 'active_panel':
+        return (
+          <>
+            {/* VIEW 1: HEALTH DOSSIERS & TIMELINE */}
+            {activeSubTab === 'health' && (
+              <div className="space-y-4">
+                {showBirdFilter && (
+                  <div className="flex items-center justify-between text-xs p-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-stone-700 dark:text-stone-300">Filter by Bird:</span>
+                      <select
+                        value={selectedChickenFilter}
+                        onChange={e => setSelectedChickenFilter(e.target.value)}
+                        className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-2.5 py-1 text-xs text-stone-800 dark:text-stone-200 font-medium"
+                      >
+                        <option value="all">Entire Flock ({chickens.length} birds)</option>
+                        {chickens.map(c => (
+                          <option key={c.id} value={c.id}>{c.name} ({c.legBandId || 'No band'})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <span className="text-stone-400">
+                      Showing {filteredRecords.length} health events
+                    </span>
+                  </div>
+                )}
+
+                {filteredRecords.length === 0 ? (
+                  <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-2">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">No Health Issues Recorded</h3>
+                    <p className="text-xs text-stone-500">Your flock is in clean standing with no active treatments or injuries.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredRecords.map(record => {
+                      const bird = chickens.find(c => c.id === record.chickenId);
+                      return (
+                        <div
+                          key={record.id}
+                          className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs space-y-3 transition-colors"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className="w-3.5 h-3.5 rounded-full shrink-0"
+                                style={{ backgroundColor: bird?.avatarColor || '#D97706' }}
+                              />
+                              <div>
+                                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                                  {record.title}
+                                </h3>
+                                <p className="text-xs text-stone-500 dark:text-stone-400">
+                                  Bird: <strong>{bird?.name || 'Unknown'}</strong> · Band: {bird?.legBandId || 'None'} · Date: <strong>{record.date}</strong>
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+                                {record.type.replace(/_/g, ' ')}
+                              </span>
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                                record.outcome === 'resolved'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                  : record.outcome === 'recovering'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                              }`}>
+                                {record.outcome}
+                              </span>
+                            </div>
+                          </div>
+
+                          {showSymptomsAndTreatment && ((record.symptoms && record.symptoms.length > 0) || record.treatmentGiven) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-stone-50/70 dark:bg-stone-850/60 p-3 rounded-lg border border-stone-200/60 dark:border-stone-800">
+                              {record.symptoms && record.symptoms.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-stone-400 block">Symptoms / Observations</span>
+                                  <span className="text-stone-800 dark:text-stone-200">{record.symptoms.join(', ')}</span>
+                                </div>
+                              )}
+
+                              {record.treatmentGiven && (
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-stone-400 block">Treatment / Intervention</span>
+                                  <span className="text-stone-800 dark:text-stone-200">{record.treatmentGiven}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {showWithdrawalAlert && record.withdrawalDaysEggs && record.withdrawalDaysEggs > 0 && (
+                            <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 flex items-center gap-2 text-xs text-red-900 dark:text-red-200">
+                              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                              <span>
+                                <strong>Egg Withdrawal Active:</strong> Do not consume eggs from this hen for <strong>{record.withdrawalDaysEggs} days</strong> post medication.
+                              </span>
+                            </div>
+                          )}
+
+                          {showRecordNotes && record.notes && (
+                            <p className="text-xs text-stone-600 dark:text-stone-400 italic">
+                              "{record.notes}"
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VIEW 2: WEATHER-AWARE FLOCK CARE */}
+            {activeSubTab === 'weather' && (
+              <div className="space-y-6">
+                <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                        Homestead Weather Sensor
+                      </span>
+                      <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2 mt-0.5">
+                        <CloudSun className="w-5 h-5 text-amber-600" />
+                        Local Ambient Conditions: {simulatedTempF}°F
+                      </h2>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        Automated seasonal prompts for comb frostbite, extreme heat panting, waterer icing, and ventilation.
+                      </p>
+                    </div>
+
+                    {showWeatherSimulator && (
+                      <div className="p-3 bg-stone-50 dark:bg-stone-850 rounded-xl border border-stone-200 dark:border-stone-800 text-xs space-y-1.5 shrink-0">
+                        <span className="font-semibold text-stone-700 dark:text-stone-300 block">
+                          Simulate Seasonal Weather:
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setSimulatedTempF(18)}
+                            className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${simulatedTempF === 18 ? 'bg-blue-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
+                          >
+                            18°F Freeze
+                          </button>
+                          <button
+                            onClick={() => setSimulatedTempF(62)}
+                            className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${simulatedTempF === 62 ? 'bg-amber-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
+                          >
+                            62°F Normal
+                          </button>
+                          <button
+                            onClick={() => setSimulatedTempF(92)}
+                            className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${simulatedTempF === 92 ? 'bg-red-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
+                          >
+                            92°F Heatwave
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`p-4 rounded-xl border space-y-2 ${
+                    weatherAdvice.type === 'freezing'
+                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100'
+                      : weatherAdvice.type === 'heat'
+                      ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-950 dark:text-red-100'
+                      : weatherAdvice.type === 'cold'
+                      ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 text-sky-950 dark:text-sky-100'
+                      : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        {weatherAdvice.title}
+                      </h3>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-white/80 dark:bg-stone-900/80">
+                        {weatherAdvice.badge}
+                      </span>
+                    </div>
+
+                    <ul className="list-disc list-inside space-y-1 text-xs pt-1">
+                      {weatherAdvice.actions.map((act, idx) => (
+                        <li key={idx}>{act}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 3: PREDATOR & SECURITY LOG */}
+            {activeSubTab === 'predators' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                  <div>
+                    <h2 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-amber-600" />
+                      Predator Encounters & Perimeter Defense
+                    </h2>
+                    <p className="text-xs text-stone-500">
+                      Record wildlife sightings, attempted breaches, and defensive hardware upgrades.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsPredatorModalOpen(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Log Sighting / Incident
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {predatorIncidents.map(inc => (
+                    <div
+                      key={inc.id}
+                      className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">
+                            {inc.predatorType}
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 capitalize">
+                            {inc.timeOfDay} sighting
+                          </span>
+                        </div>
+
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          inc.severity === 'damage_attempt'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                        }`}>
+                          {inc.severity.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      <p className="text-stone-500">
+                        Date: <strong>{inc.date}</strong>
+                      </p>
+
+                      {showPredatorActions && (
+                        <div className="p-3 bg-stone-50 dark:bg-stone-850 rounded-lg space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-stone-400 block">Defense Action Taken</span>
+                          <p className="text-stone-800 dark:text-stone-200">{inc.actionTaken}</p>
+                        </div>
+                      )}
+
+                      {showRecordNotes && inc.notes && (
+                        <p className="text-stone-500 italic">
+                          "{inc.notes}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 4: NIGHT LOCKDOWN CHECKLIST */}
+            {activeSubTab === 'lockdown' && (
+              <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                    Evening Routine Protocol
+                  </span>
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2 mt-0.5">
+                    <Lock className="w-5 h-5 text-amber-600" />
+                    Nightly Roost & Coop Lockdown Checklist
+                  </h2>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                    Never lose a bird to nocturnal predators. Verify all physical safeguards every night at dusk.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    {
+                      id: 'door',
+                      label: 'Automatic Coop Door Confirmed Closed & Latched',
+                      desc: 'Verify solar/electric timer triggered and all birds entered before pop-door closed.',
+                      checked: doorConfirmed,
+                      toggle: () => setDoorConfirmed(!doorConfirmed),
+                    },
+                    {
+                      id: 'windows',
+                      label: 'Windows & Screen Latches Locked',
+                      desc: 'Hardware cloth mesh secure with two-step predator-proof carabiners or barrel bolts.',
+                      checked: windowsLatched,
+                      toggle: () => setWindowsLatched(!windowsLatched),
+                    },
+                    {
+                      id: 'apron',
+                      label: 'Perimeter Hardware Cloth & Predator Skirt Clear',
+                      desc: 'Inspect ground perimeter for signs of raccoon or fox digging along skirt edge.',
+                      checked: apronChecked,
+                      toggle: () => setApronChecked(!apronChecked),
+                    },
+                    {
+                      id: 'feed',
+                      label: 'Feed Bins Sealed in Galvanized Cans',
+                      desc: 'Prevents attracting nocturnal rodents, raccoons, bears, or possums.',
+                      checked: feedLocked,
+                      toggle: () => setFeedLocked(!feedLocked),
+                    },
+                    {
+                      id: 'waterer',
+                      label: 'Drinkers Clean & Frost Protection Set',
+                      desc: 'Ensure heated water base plugged in if sub-freezing night is forecast.',
+                      checked: watererClean,
+                      toggle: () => setWatererClean(!watererClean),
+                    },
+                    {
+                      id: 'headcount',
+                      label: 'Roost Headcount Verified (All Birds Present)',
+                      desc: `Confirm count matches ${chickens.length} active birds safely roosting on perch bars.`,
+                      checked: headcountConfirmed,
+                      toggle: () => setHeadcountConfirmed(!headcountConfirmed),
+                    },
+                  ].map(item => (
+                    <div
+                      key={item.id}
+                      onClick={item.toggle}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 ${
+                        item.checked
+                          ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-850 hover:bg-stone-100'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                        item.checked
+                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800'
+                      }`}>
+                        {item.checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+
+                      <div className="text-xs">
+                        <h4 className={`font-bold ${item.checked ? 'text-emerald-950 dark:text-emerald-100' : 'text-stone-900 dark:text-stone-100'}`}>
+                          {item.label}
+                        </h4>
+                        {showLockdownDescriptions && (
+                          <p className="text-stone-500 dark:text-stone-400 mt-0.5 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
+                  <span className="text-xs text-stone-500">
+                    Date: <strong>{todayStr}</strong>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveLockdownChecklist}
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    {checklistSaved ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                    {checklistSaved ? 'Lockdown Verified & Saved!' : 'Confirm Tonight’s Safe Lockdown'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -170,10 +591,11 @@ export const HealthTab: React.FC<HealthTabProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <TabCustomizeControls tabId="health" />
           <button
             onClick={() => setIsHealthModalOpen(true)}
-            className="px-3.5 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 dark:bg-rose-600 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 dark:bg-rose-600 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Log Health Event
@@ -181,395 +603,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
         </div>
       </div>
 
-      {/* Sub-Tab Navigation */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs">
-        {[
-          { id: 'health', label: `Health Dossiers (${healthRecords.length})`, icon: HeartPulse },
-          { id: 'weather', label: 'Weather-Aware Care', icon: CloudSun },
-          { id: 'predators', label: `Predator Logs (${predatorIncidents.length})`, icon: ShieldAlert },
-          { id: 'lockdown', label: 'Night Lockdown Checklist', icon: Lock },
-        ].map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 ${
-                isActive
-                  ? 'bg-amber-700 text-white dark:bg-amber-600'
-                  : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* VIEW 1: HEALTH DOSSIERS & TIMELINE */}
-      {activeSubTab === 'health' && (
-        <div className="space-y-4">
-          {/* Bird Filter Selector */}
-          <div className="flex items-center justify-between text-xs p-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-stone-700 dark:text-stone-300">Filter by Bird:</span>
-              <select
-                value={selectedChickenFilter}
-                onChange={e => setSelectedChickenFilter(e.target.value)}
-                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-2.5 py-1 text-xs text-stone-800 dark:text-stone-200 font-medium"
-              >
-                <option value="all">Entire Flock ({chickens.length} birds)</option>
-                {chickens.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.legBandId || 'No band'})</option>
-                ))}
-              </select>
-            </div>
-
-            <span className="text-stone-400">
-              Showing {filteredRecords.length} health events
-            </span>
-          </div>
-
-          {/* Timeline List */}
-          {filteredRecords.length === 0 ? (
-            <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">No Health Issues Recorded</h3>
-              <p className="text-xs text-stone-500">Your flock is in clean standing with no active treatments or injuries.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredRecords.map(record => {
-                const bird = chickens.find(c => c.id === record.chickenId);
-                return (
-                  <div
-                    key={record.id}
-                    className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs space-y-3 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className="w-3.5 h-3.5 rounded-full shrink-0"
-                          style={{ backgroundColor: bird?.avatarColor || '#D97706' }}
-                        />
-                        <div>
-                          <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                            {record.title}
-                          </h3>
-                          <p className="text-xs text-stone-500 dark:text-stone-400">
-                            Bird: <strong>{bird?.name || 'Unknown'}</strong> · Band: {bird?.legBandId || 'None'} · Date: <strong>{record.date}</strong>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                          {record.type.replace(/_/g, ' ')}
-                        </span>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          record.outcome === 'resolved'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                            : record.outcome === 'recovering'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                        }`}>
-                          {record.outcome}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Symptoms & Treatment Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-stone-50/70 dark:bg-stone-850/60 p-3 rounded-lg border border-stone-200/60 dark:border-stone-800">
-                      {record.symptoms && record.symptoms.length > 0 && (
-                        <div>
-                          <span className="text-[10px] font-bold uppercase text-stone-400 block">Symptoms / Observations</span>
-                          <span className="text-stone-800 dark:text-stone-200">{record.symptoms.join(', ')}</span>
-                        </div>
-                      )}
-
-                      {record.treatmentGiven && (
-                        <div>
-                          <span className="text-[10px] font-bold uppercase text-stone-400 block">Treatment / Intervention</span>
-                          <span className="text-stone-800 dark:text-stone-200">{record.treatmentGiven}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Egg Withdrawal Warning Banner if active */}
-                    {record.withdrawalDaysEggs && record.withdrawalDaysEggs > 0 && (
-                      <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 flex items-center gap-2 text-xs text-red-900 dark:text-red-200">
-                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                        <span>
-                          <strong>Egg Withdrawal Active:</strong> Do not consume eggs from this hen for <strong>{record.withdrawalDaysEggs} days</strong> post medication.
-                        </span>
-                      </div>
-                    )}
-
-                    {record.notes && (
-                      <p className="text-xs text-stone-600 dark:text-stone-400 italic">
-                        "{record.notes}"
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* VIEW 2: WEATHER-AWARE FLOCK CARE */}
-      {activeSubTab === 'weather' && (
-        <div className="space-y-6">
-          <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                  Homestead Weather Sensor
-                </span>
-                <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2 mt-0.5">
-                  <CloudSun className="w-5 h-5 text-amber-600" />
-                  Local Ambient Conditions: {simulatedTempF}°F
-                </h2>
-                <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                  Automated seasonal prompts for comb frostbite, extreme heat panting, waterer icing, and ventilation.
-                </p>
-              </div>
-
-              {/* Temperature simulation controller */}
-              <div className="p-3 bg-stone-50 dark:bg-stone-850 rounded-xl border border-stone-200 dark:border-stone-800 text-xs space-y-1.5 shrink-0">
-                <span className="font-semibold text-stone-700 dark:text-stone-300 block">
-                  Simulate Seasonal Weather:
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setSimulatedTempF(18)}
-                    className={`px-2 py-1 rounded text-[11px] font-bold ${simulatedTempF === 18 ? 'bg-blue-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
-                  >
-                    18°F Freeze
-                  </button>
-                  <button
-                    onClick={() => setSimulatedTempF(62)}
-                    className={`px-2 py-1 rounded text-[11px] font-bold ${simulatedTempF === 62 ? 'bg-amber-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
-                  >
-                    62°F Normal
-                  </button>
-                  <button
-                    onClick={() => setSimulatedTempF(92)}
-                    className={`px-2 py-1 rounded text-[11px] font-bold ${simulatedTempF === 92 ? 'bg-red-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
-                  >
-                    92°F Heatwave
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Weather Alert Banner */}
-            <div className={`p-4 rounded-xl border space-y-2 ${
-              weatherAdvice.type === 'freezing'
-                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100'
-                : weatherAdvice.type === 'heat'
-                ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-950 dark:text-red-100'
-                : weatherAdvice.type === 'cold'
-                ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 text-sky-950 dark:text-sky-100'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100'
-            }`}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  {weatherAdvice.title}
-                </h3>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-white/80 dark:bg-stone-900/80">
-                  {weatherAdvice.badge}
-                </span>
-              </div>
-
-              <ul className="list-disc list-inside space-y-1 text-xs pt-1">
-                {weatherAdvice.actions.map((act, idx) => (
-                  <li key={idx}>{act}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW 3: PREDATOR & SECURITY LOG */}
-      {activeSubTab === 'predators' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
-            <div>
-              <h2 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600" />
-                Predator Encounters & Perimeter Defense
-              </h2>
-              <p className="text-xs text-stone-500">
-                Record wildlife sightings, attempted breaches, and defensive hardware upgrades.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsPredatorModalOpen(true)}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Log Sighting / Incident
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {predatorIncidents.map(inc => (
-              <div
-                key={inc.id}
-                className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs space-y-2 text-xs"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">
-                      {inc.predatorType}
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 capitalize">
-                      {inc.timeOfDay} sighting
-                    </span>
-                  </div>
-
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                    inc.severity === 'damage_attempt'
-                      ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                  }`}>
-                    {inc.severity.replace(/_/g, ' ')}
-                  </span>
-                </div>
-
-                <p className="text-stone-500">
-                  Date: <strong>{inc.date}</strong>
-                </p>
-
-                <div className="p-3 bg-stone-50 dark:bg-stone-850 rounded-lg space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-stone-400 block">Defense Action Taken</span>
-                  <p className="text-stone-800 dark:text-stone-200">{inc.actionTaken}</p>
-                </div>
-
-                {inc.notes && (
-                  <p className="text-stone-500 italic">
-                    "{inc.notes}"
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* VIEW 4: NIGHT LOCKDOWN CHECKLIST */}
-      {activeSubTab === 'lockdown' && (
-        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              Evening Routine Protocol
-            </span>
-            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2 mt-0.5">
-              <Lock className="w-5 h-5 text-amber-600" />
-              Nightly Roost & Coop Lockdown Checklist
-            </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-              Never lose a bird to nocturnal predators. Verify all physical safeguards every night at dusk.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                id: 'door',
-                label: 'Automatic Coop Door Confirmed Closed & Latched',
-                desc: 'Verify solar/electric timer triggered and all birds entered before pop-door closed.',
-                checked: doorConfirmed,
-                toggle: () => setDoorConfirmed(!doorConfirmed),
-              },
-              {
-                id: 'windows',
-                label: 'Windows & Screen Latches Locked',
-                desc: 'Hardware cloth mesh secure with two-step predator-proof carabiners or barrel bolts.',
-                checked: windowsLatched,
-                toggle: () => setWindowsLatched(!windowsLatched),
-              },
-              {
-                id: 'apron',
-                label: 'Perimeter Hardware Cloth & Predator Skirt Clear',
-                desc: 'Inspect ground perimeter for signs of raccoon or fox digging along skirt edge.',
-                checked: apronChecked,
-                toggle: () => setApronChecked(!apronChecked),
-              },
-              {
-                id: 'feed',
-                label: 'Feed Bins Sealed in Galvanized Cans',
-                desc: 'Prevents attracting nocturnal rodents, raccoons, bears, or possums.',
-                checked: feedLocked,
-                toggle: () => setFeedLocked(!feedLocked),
-              },
-              {
-                id: 'waterer',
-                label: 'Drinkers Clean & Frost Protection Set',
-                desc: 'Ensure heated water base plugged in if sub-freezing night is forecast.',
-                checked: watererClean,
-                toggle: () => setWatererClean(!watererClean),
-              },
-              {
-                id: 'headcount',
-                label: 'Roost Headcount Verified (All Birds Present)',
-                desc: `Confirm count matches ${chickens.length} active birds safely roosting on perch bars.`,
-                checked: headcountConfirmed,
-                toggle: () => setHeadcountConfirmed(!headcountConfirmed),
-              },
-            ].map(item => (
-              <div
-                key={item.id}
-                onClick={item.toggle}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 ${
-                  item.checked
-                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
-                    : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-850 hover:bg-stone-100'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                  item.checked
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800'
-                }`}>
-                  {item.checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                </div>
-
-                <div className="text-xs">
-                  <h4 className={`font-bold ${item.checked ? 'text-emerald-950 dark:text-emerald-100' : 'text-stone-900 dark:text-stone-100'}`}>
-                    {item.label}
-                  </h4>
-                  <p className="text-stone-500 dark:text-stone-400 mt-0.5 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
-            <span className="text-xs text-stone-500">
-              Date: <strong>{todayStr}</strong>
-            </span>
-
-            <button
-              type="button"
-              onClick={handleSaveLockdownChecklist}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-colors flex items-center gap-2"
-            >
-              {checklistSaved ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              {checklistSaved ? 'Lockdown Verified & Saved!' : 'Confirm Tonight’s Safe Lockdown'}
-            </button>
-          </div>
-        </div>
-      )}
+      <CustomizableSectionList tabId="health" renderSection={renderSection} />
 
       {/* Log Health Event Modal */}
       {isHealthModalOpen && (

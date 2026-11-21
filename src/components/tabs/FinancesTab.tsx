@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { FinancialTransaction, EggLog } from '../../types/flock';
 import { getTodayDateStr } from '../../utils/dateUtils';
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
 interface FinancesTabProps {
   transactions: FinancialTransaction[];
@@ -29,6 +31,7 @@ export const FinancesTab: React.FC<FinancesTabProps> = ({
   onSaveTransaction,
   onDeleteTransaction,
 }) => {
+  const { isItemVisible } = useCustomization();
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('income');
@@ -139,17 +142,18 @@ export const FinancesTab: React.FC<FinancesTabProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <TabCustomizeControls tabId="finances" />
           <button
             onClick={() => handleOpenAdd('income')}
-            className="px-3.5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Log Egg Sale
           </button>
           <button
             onClick={() => handleOpenAdd('expense')}
-            className="px-3.5 py-2 text-xs font-bold text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-xl transition-colors flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-2 text-xs font-bold text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-xl transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Log Expense
@@ -157,181 +161,235 @@ export const FinancesTab: React.FC<FinancesTabProps> = ({
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Net Balance */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Net Operating Balance</span>
-            <PiggyBank className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className={`text-2xl font-extrabold font-mono ${
-              netProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {netProfit >= 0 ? `+$${netProfit.toFixed(2)}` : `-$${Math.abs(netProfit).toFixed(2)}`}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-            Income: ${totalIncome.toFixed(2)} · Expenses: ${totalExpenses.toFixed(2)}
-          </p>
-        </div>
-
-        {/* Cost Per Dozen Produced */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>True Cost / Dozen</span>
-            <Egg className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold font-mono text-stone-900 dark:text-stone-100">
-              ${costPerDozen.toFixed(2)}
-            </span>
-            <span className="text-xs font-semibold text-stone-500">/doz</span>
-          </div>
-          <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-            ~${costPerEgg.toFixed(2)} per single egg produced
-          </p>
-        </div>
-
-        {/* Dozens Sold */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Dozens Sold</span>
-            <ShoppingBag className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold font-mono text-stone-900 dark:text-stone-100">
-              {totalDozensSold}
-            </span>
-            <span className="text-xs font-semibold text-stone-500">dozens</span>
-          </div>
-          <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-            Avg sale: ${avgSalePricePerDozen.toFixed(2)}/dozen
-          </p>
-        </div>
-
-        {/* Production Margin */}
-        <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Profit Margin / Dozen</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
-              +${Math.max(0, avgSalePricePerDozen - costPerDozen).toFixed(2)}
-            </span>
-            <span className="text-xs font-semibold text-stone-500">/doz profit</span>
-          </div>
-          <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-            Over total operating overhead
-          </p>
-        </div>
-      </div>
-
-      {/* Transactions Ledger Table */}
-      <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-amber-600" />
-              Transaction History & Expense Journal
-            </h2>
-            <p className="text-xs text-stone-500">
-              Complete audited log of homestead poultry cash flows.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs bg-stone-100 dark:bg-stone-800 p-1 rounded-lg">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`px-3 py-1 rounded-md font-semibold transition-colors ${
-                filterType === 'all' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
-              }`}
-            >
-              All ({transactions.length})
-            </button>
-            <button
-              onClick={() => setFilterType('income')}
-              className={`px-3 py-1 rounded-md font-semibold transition-colors ${
-                filterType === 'income' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
-              }`}
-            >
-              Sales / Income
-            </button>
-            <button
-              onClick={() => setFilterType('expense')}
-              className={`px-3 py-1 rounded-md font-semibold transition-colors ${
-                filterType === 'expense' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
-              }`}
-            >
-              Expenses
-            </button>
-          </div>
-        </div>
-
-        <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-x-auto">
-          <table className="w-full min-w-[580px] text-left text-xs">
-            <thead className="bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 font-semibold border-b border-stone-200 dark:border-stone-800">
-              <tr>
-                <th className="py-2.5 px-3">Date</th>
-                <th className="py-2.5 px-3">Type</th>
-                <th className="py-2.5 px-3">Description</th>
-                <th className="py-2.5 px-3">Category</th>
-                <th className="py-2.5 px-3">Quantity / Rate</th>
-                <th className="py-2.5 px-3 text-right">Amount</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100 dark:divide-stone-800 text-stone-800 dark:text-stone-200">
-              {filteredTransactions.map(tx => {
-                const isInc = tx.type === 'income';
-                return (
-                  <tr key={tx.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/40 transition-colors">
-                    <td className="py-3 px-3 font-mono text-stone-500 whitespace-nowrap">{tx.date}</td>
-                    <td className="py-3 px-3">
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                        isInc
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                          : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300'
+      <CustomizableSectionList
+        tabId="finances"
+        renderSection={(sectionId) => {
+          if (sectionId === 'kpis') {
+            const showNet = isItemVisible('finances', 'kpis', 'netBalance');
+            const showCost = isItemVisible('finances', 'kpis', 'costPerDozen');
+            const showSold = isItemVisible('finances', 'kpis', 'dozensSold');
+            const showMargin = isItemVisible('finances', 'kpis', 'profitMargin');
+            const visibleCount = [showNet, showCost, showSold, showMargin].filter(Boolean).length;
+            if (visibleCount === 0) {
+              return (
+                <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+                  All financial summary KPIs are hidden. Use Customize to show metrics.
+                </div>
+              );
+            }
+            const gridCols =
+              visibleCount === 1
+                ? 'grid-cols-1'
+                : visibleCount === 2
+                ? 'grid-cols-1 sm:grid-cols-2'
+                : visibleCount === 3
+                ? 'grid-cols-1 sm:grid-cols-3'
+                : 'grid-cols-2 lg:grid-cols-4';
+            return (
+              <div className={`grid ${gridCols} gap-4`}>
+                {showNet && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Net Operating Balance</span>
+                      <PiggyBank className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className={`text-2xl font-extrabold font-mono ${
+                        netProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                       }`}>
-                        {isInc ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                        {isInc ? 'Income' : 'Expense'}
+                        {netProfit >= 0 ? `+$${netProfit.toFixed(2)}` : `-$${Math.abs(netProfit).toFixed(2)}`}
                       </span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <strong className="block text-stone-900 dark:text-stone-100">{tx.title}</strong>
-                      {tx.notes && <span className="text-[11px] text-stone-400 block line-clamp-1">{tx.notes}</span>}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
-                        {getCategoryBadge(tx.category)}
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+                      Income: ${totalIncome.toFixed(2)} · Expenses: ${totalExpenses.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+
+                {showCost && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>True Cost / Dozen</span>
+                      <Egg className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-2xl font-extrabold font-mono text-stone-900 dark:text-stone-100">
+                        ${costPerDozen.toFixed(2)}
                       </span>
-                    </td>
-                    <td className="py-3 px-3 font-mono text-stone-500">
-                      {tx.quantity ? `${tx.quantity} ${tx.category === 'egg_sales' ? 'doz' : 'units'}` : '—'}
-                      {tx.unitPrice ? ` @ $${tx.unitPrice.toFixed(2)}` : ''}
-                    </td>
-                    <td className={`py-3 px-3 text-right font-mono font-bold text-sm ${
-                      isInc ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-900 dark:text-stone-100'
-                    }`}>
-                      {isInc ? `+$${tx.amount.toFixed(2)}` : `-$${tx.amount.toFixed(2)}`}
-                    </td>
-                    <td className="py-3 px-3 text-right">
+                      <span className="text-xs font-semibold text-stone-500">/doz</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+                      ~${costPerEgg.toFixed(2)} per single egg produced
+                    </p>
+                  </div>
+                )}
+
+                {showSold && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Dozens Sold</span>
+                      <ShoppingBag className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-2xl font-extrabold font-mono text-stone-900 dark:text-stone-100">
+                        {totalDozensSold}
+                      </span>
+                      <span className="text-xs font-semibold text-stone-500">dozens</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                      Avg sale: ${avgSalePricePerDozen.toFixed(2)}/dozen
+                    </p>
+                  </div>
+                )}
+
+                {showMargin && (
+                  <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Profit Margin / Dozen</span>
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-2xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
+                        +${Math.max(0, avgSalePricePerDozen - costPerDozen).toFixed(2)}
+                      </span>
+                      <span className="text-xs font-semibold text-stone-500">/doz profit</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+                      Over total operating overhead
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (sectionId === 'ledger') {
+            const showTypeFilter = isItemVisible('finances', 'ledger', 'typeFilter');
+            const showTypeCol = isItemVisible('finances', 'ledger', 'typeColumn');
+            const showCategoryCol = isItemVisible('finances', 'ledger', 'categoryColumn');
+            const showQtyRateCol = isItemVisible('finances', 'ledger', 'quantityRateColumn');
+            const showNotes = isItemVisible('finances', 'ledger', 'notes');
+            const showDeleteCol = isItemVisible('finances', 'ledger', 'deleteAction');
+
+            return (
+              <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                      <Receipt className="w-4 h-4 text-amber-600" />
+                      Transaction History & Expense Journal
+                    </h2>
+                    <p className="text-xs text-stone-500">
+                      Complete audited log of homestead poultry cash flows.
+                    </p>
+                  </div>
+
+                  {showTypeFilter && (
+                    <div className="flex items-center gap-1.5 text-xs bg-stone-100 dark:bg-stone-800 p-1 rounded-lg">
                       <button
-                        onClick={() => onDeleteTransaction(tx.id)}
-                        className="text-stone-400 hover:text-red-600 text-xs transition-colors"
+                        onClick={() => setFilterType('all')}
+                        className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                          filterType === 'all' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
+                        }`}
                       >
-                        Delete
+                        All ({transactions.length})
                       </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      <button
+                        onClick={() => setFilterType('income')}
+                        className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                          filterType === 'income' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
+                        }`}
+                      >
+                        Sales / Income
+                      </button>
+                      <button
+                        onClick={() => setFilterType('expense')}
+                        className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                          filterType === 'expense' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs' : 'text-stone-600 dark:text-stone-400'
+                        }`}
+                      >
+                        Expenses
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-x-auto">
+                  <table className="w-full min-w-[440px] text-left text-xs">
+                    <thead className="bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 font-semibold border-b border-stone-200 dark:border-stone-800">
+                      <tr>
+                        <th className="py-2.5 px-3">Date</th>
+                        {showTypeCol && <th className="py-2.5 px-3">Type</th>}
+                        <th className="py-2.5 px-3">Description</th>
+                        {showCategoryCol && <th className="py-2.5 px-3">Category</th>}
+                        {showQtyRateCol && <th className="py-2.5 px-3">Quantity / Rate</th>}
+                        <th className="py-2.5 px-3 text-right">Amount</th>
+                        {showDeleteCol && <th className="py-2.5 px-3 text-right">Action</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100 dark:divide-stone-800 text-stone-800 dark:text-stone-200">
+                      {filteredTransactions.map(tx => {
+                        const isInc = tx.type === 'income';
+                        return (
+                          <tr key={tx.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/40 transition-colors">
+                            <td className="py-3 px-3 font-mono text-stone-500 whitespace-nowrap">{tx.date}</td>
+                            {showTypeCol && (
+                              <td className="py-3 px-3">
+                                <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                                  isInc
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                    : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300'
+                                }`}>
+                                  {isInc ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                  {isInc ? 'Income' : 'Expense'}
+                                </span>
+                              </td>
+                            )}
+                            <td className="py-3 px-3">
+                              <strong className="block text-stone-900 dark:text-stone-100">{tx.title}</strong>
+                              {showNotes && tx.notes && <span className="text-[11px] text-stone-400 block line-clamp-1">{tx.notes}</span>}
+                            </td>
+                            {showCategoryCol && (
+                              <td className="py-3 px-3">
+                                <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
+                                  {getCategoryBadge(tx.category)}
+                                </span>
+                              </td>
+                            )}
+                            {showQtyRateCol && (
+                              <td className="py-3 px-3 font-mono text-stone-500">
+                                {tx.quantity ? `${tx.quantity} ${tx.category === 'egg_sales' ? 'doz' : 'units'}` : '—'}
+                                {tx.unitPrice ? ` @ $${tx.unitPrice.toFixed(2)}` : ''}
+                              </td>
+                            )}
+                            <td className={`py-3 px-3 text-right font-mono font-bold text-sm ${
+                              isInc ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-900 dark:text-stone-100'
+                            }`}>
+                              {isInc ? `+$${tx.amount.toFixed(2)}` : `-$${tx.amount.toFixed(2)}`}
+                            </td>
+                            {showDeleteCol && (
+                              <td className="py-3 px-3 text-right">
+                                <button
+                                  onClick={() => onDeleteTransaction(tx.id)}
+                                  className="text-stone-400 hover:text-red-600 text-xs transition-colors cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        }}
+      />
 
       {/* Log Transaction Modal */}
       {isModalOpen && (

@@ -279,6 +279,26 @@ export interface SmartReminder {
   notes?: string;
 }
 
+export type AppTabId =
+  | 'dashboard'
+  | 'eggs'
+  | 'flock'
+  | 'coops'
+  | 'feed'
+  | 'incubation'
+  | 'health'
+  | 'finances'
+  | 'breeds'
+  | 'analytics';
+
+export interface TabLayoutConfig {
+  sectionOrder: string[];
+  hiddenSections: string[];
+  sectionItems: Record<string, Record<string, boolean>>;
+}
+
+export type TabCustomizationState = Partial<Record<AppTabId, TabLayoutConfig>>;
+
 export interface FlockState {
   coops: Coop[];
   chickens: Chicken[];
@@ -295,4 +315,5 @@ export interface FlockState {
   coopEnvironmentLogs?: CoopEnvironmentLog[];
   coopMaintenanceItems?: CoopMaintenanceItem[];
   timezone?: string;
+  tabCustomization?: TabCustomizationState;
 }

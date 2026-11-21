@@ -46,6 +46,8 @@ import { EggVisual } from '../EggVisual';
 import { DailyEggCountsBarGraph } from '../DailyEggCountsBarGraph';
 import { ChickenAvatar } from '../ChickenAvatar';
 import { CHICKEN_BREEDS } from '../../data/breeds';
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
 interface DashboardTabProps {
   coops: Coop[];
@@ -84,6 +86,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   onToggleReminder,
   onOpenTimeZoneModal,
 }) => {
+  const { isItemVisible } = useCustomization();
+
   // Configured or detected homestead timezone
   const todayDate = useMemo(() => getTodayDateStr(timezone), [timezone]);
   const currentTimePreview = useMemo(() => getCurrentDateTimePreview(timezone), [timezone]);
@@ -369,108 +373,145 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     return allChores;
   }, [choreFilter, allChores, pendingChores, completedChores]);
 
-  return (
-    <div className="space-y-8">
-      {/* 1. Hero Pastoral Section */}
-      <div className="relative rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-stone-900 text-white shadow-sm">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/src/assets/images/hero_flock_pasture_1791579810391.jpg"
-            alt="Flock pasture at morning sunrise"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover opacity-45"
-            onError={(e) => {
-              (e.currentTarget as HTMLElement).style.display = 'none';
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-stone-950/90 via-stone-950/70 to-stone-900/40" />
-        </div>
+  const renderSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'hero': {
+        const showDateBadge = isItemVisible('dashboard', 'hero', 'dateBadge');
+        const showSummaryText = isItemVisible('dashboard', 'hero', 'summaryText');
+        const showActionButtons = isItemVisible('dashboard', 'hero', 'actionButtons');
+        const showTimezoneButton = isItemVisible('dashboard', 'hero', 'timezoneButton');
 
-        <div className="relative z-10 p-6 sm:p-10 max-w-3xl">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-300 tracking-wider uppercase mb-2">
-            <span>Homestead Flock Monitor</span>
-            <span>·</span>
-            <span>{currentTimePreview.readableDate}</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
-            Flock health, egg production, and homestead management in one unified hub.
-          </h1>
-
-          <p className="mt-3 text-sm sm:text-base text-stone-200 leading-relaxed max-w-2xl">
-            {chickens.length === 0 ? (
-              <>Welcome to Flocker! Get started by setting up your first coop, registering your birds, and logging daily egg production.</>
-            ) : (
-              <>
-                Currently overseeing {chickens.length} birds across {coops.length} active coops with {summary.activeLayersCount} active laying hens.
-                Daily yield today is <span className="font-semibold text-amber-200">{todayEggCount} fresh eggs</span> at an estimated {summary.currentLayingRatePercent}% laying efficiency.
-              </>
-            )}
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={onOpenLogEggs}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-stone-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Log Today's Eggs</span>
-            </button>
-            <button
-              onClick={onOpenAddChicken}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 rounded-lg transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Register Bird</span>
-            </button>
-            <button
-              onClick={() => onNavigateToTab('analytics')}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-stone-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <span>View Full Analytics</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-            {onOpenTimeZoneModal && (
-              <button
-                onClick={onOpenTimeZoneModal}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-300 hover:text-amber-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer ml-auto"
-                title="Change Homestead Time Zone"
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-400" />
-                <span>{currentTimePreview.timeZoneName}</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 2. SMART DAILY FLOCK BRIEFING DASHBOARD */}
-      <div className="p-6 bg-gradient-to-br from-amber-500/5 via-stone-50 dark:via-stone-900 to-amber-700/5 border border-amber-200/80 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-amber-200/60 dark:border-stone-800">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-              <Sparkles className="w-5 h-5" />
+        return (
+          <div className="relative rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-stone-900 text-white shadow-sm">
+            <div className="absolute inset-0 z-0">
+              <img
+                src="/src/assets/images/hero_flock_pasture_1791579810391.jpg"
+                alt="Flock pasture at morning sunrise"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover opacity-45"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-stone-950/90 via-stone-950/70 to-stone-900/40" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">
-                  Smart Daily Flock Briefing
-                </h2>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                  Today's Status
-                </span>
-                <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-                  {currentTimePreview.readableDate} · {currentTimePreview.readableTime}
-                </span>
+
+            <div className="relative z-10 p-6 sm:p-10 max-w-3xl">
+              {showDateBadge && (
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300 tracking-wider uppercase mb-2">
+                  <span>Homestead Flock Monitor</span>
+                  <span>·</span>
+                  <span>{currentTimePreview.readableDate}</span>
+                </div>
+              )}
+
+              <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+                Flock health, egg production, and homestead management in one unified hub.
+              </h1>
+
+              {showSummaryText && (
+                <p className="mt-3 text-sm sm:text-base text-stone-200 leading-relaxed max-w-2xl">
+                  {chickens.length === 0 ? (
+                    <>Welcome to Flocker! Get started by setting up your first coop, registering your birds, and logging daily egg production.</>
+                  ) : (
+                    <>
+                      Currently overseeing {chickens.length} birds across {coops.length} active coops with {summary.activeLayersCount} active laying hens.
+                      Daily yield today is <span className="font-semibold text-amber-200">{todayEggCount} fresh eggs</span> at an estimated {summary.currentLayingRatePercent}% laying efficiency.
+                    </>
+                  )}
+                </p>
+              )}
+
+              {(showActionButtons || (showTimezoneButton && onOpenTimeZoneModal)) && (
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  {showActionButtons && (
+                    <>
+                      <button
+                        onClick={onOpenLogEggs}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-stone-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Log Today's Eggs</span>
+                      </button>
+                      <button
+                        onClick={onOpenAddChicken}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Register Bird</span>
+                      </button>
+                      <button
+                        onClick={() => onNavigateToTab('analytics')}
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-stone-300 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <span>View Full Analytics</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                  {showTimezoneButton && onOpenTimeZoneModal && (
+                    <button
+                      onClick={onOpenTimeZoneModal}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-300 hover:text-amber-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer ml-auto"
+                      title="Change Homestead Time Zone"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{currentTimePreview.timeZoneName}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case 'briefing': {
+        const showQuickActions = isItemVisible('dashboard', 'briefing', 'quickActions');
+        const showCardEggs = isItemVisible('dashboard', 'briefing', 'cardEggsToday');
+        const showCardChores = isItemVisible('dashboard', 'briefing', 'cardChoresDue');
+        const showCardFeed = isItemVisible('dashboard', 'briefing', 'cardFeedStock');
+        const showCardHealth = isItemVisible('dashboard', 'briefing', 'cardHealthChecks');
+        const showChoreChecklist = isItemVisible('dashboard', 'briefing', 'choreChecklist');
+
+        const visibleBriefingCards = [showCardEggs, showCardChores, showCardFeed, showCardHealth].filter(Boolean).length;
+        const briefingColsClass =
+          visibleBriefingCards === 1
+            ? 'grid-cols-1'
+            : visibleBriefingCards === 2
+            ? 'grid-cols-1 sm:grid-cols-2'
+            : visibleBriefingCards === 3
+            ? 'grid-cols-1 sm:grid-cols-3'
+            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+
+        return (
+          <div className="p-6 bg-gradient-to-br from-amber-500/5 via-stone-50 dark:via-stone-900 to-amber-700/5 border border-amber-200/80 dark:border-stone-800 rounded-2xl shadow-xs space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-amber-200/60 dark:border-stone-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                      Smart Daily Flock Briefing
+                    </h2>
+                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                      Today's Status
+                    </span>
+                    <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+                      {currentTimePreview.readableDate} · {currentTimePreview.readableTime}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    Instant answers to homestead morning questions & single-tap actions.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                Instant answers to homestead morning questions & single-tap actions.
-              </p>
-            </div>
-          </div>
 
-          {/* Quick Action Buttons & Timezone indicator */}
-          <div className="flex items-center gap-2 flex-wrap">
+              {/* Quick Action Buttons & Timezone indicator */}
+              {showQuickActions && (
+                <div className="flex items-center gap-2 flex-wrap">
             {onOpenTimeZoneModal && (
               <button
                 type="button"
@@ -512,11 +553,14 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span>Lockdown Checklist</span>
             </button>
           </div>
+              )}
         </div>
 
         {/* 4 Answers Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {visibleBriefingCards > 0 && (
+        <div className={`grid ${briefingColsClass} gap-4`}>
           {/* Answer 1: How many eggs collected? */}
+          {showCardEggs && (
           <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-stone-500 dark:text-stone-400">
@@ -548,8 +592,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span>{todayEggCount > 0 ? '+ Add More Eggs' : 'Log Today’s Harvest →'}</span>
             </button>
           </div>
+          )}
 
           {/* Answer 2: Which chores are due? */}
+          {showCardChores && (
           <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-stone-500 dark:text-stone-400">
@@ -584,8 +630,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               />
             </div>
           </div>
+          )}
 
           {/* Answer 3: Is feed running low? */}
+          {showCardFeed && (
           <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-stone-500 dark:text-stone-400">
@@ -623,8 +671,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span>Manage Feed Inventory →</span>
             </button>
           </div>
+          )}
 
           {/* Answer 4: Is any chicken due for a health check? */}
+          {showCardHealth && (
           <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-stone-500 dark:text-stone-400">
@@ -656,9 +706,12 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span>Health Dossiers & Logs →</span>
             </button>
           </div>
+          )}
         </div>
+        )}
 
         {/* Smart Homestead Routine Checklist */}
+        {showChoreChecklist && (
         <div className="pt-2 border-t border-amber-200/60 dark:border-stone-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
@@ -859,40 +912,69 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             )}
           </div>
         </div>
+        )}
+
+        {!showQuickActions && visibleBriefingCards === 0 && !showChoreChecklist && (
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            All briefing details are hidden. Use Customize to re-enable cards or the chore checklist.
+          </p>
+        )}
       </div>
+        );
+      }
 
-      {/* 3. SEASONAL LAYING PREDICTIONS & WEATHER CARE */}
-      {/* "Seasonal laying predictions: Estimate upcoming egg production from historical laying data, flock age, molting records, and daylight or weather information. Clearly label estimates rather than promising exact counts." */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Seasonal Predictions Card */}
-        <div className="lg:col-span-2 p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-stone-800">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center">
-                <Sun className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                  <span>Seasonal Egg Laying Prediction Model</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-normal">
-                    Biology-Based Estimate
+      case 'seasonal_weather': {
+        const showSeasonalCard = isItemVisible('dashboard', 'seasonal_weather', 'seasonalCard');
+        const showSeasonalRanges = isItemVisible('dashboard', 'seasonal_weather', 'seasonalRanges');
+        const showSeasonalModifiers = isItemVisible('dashboard', 'seasonal_weather', 'seasonalModifiers');
+        const showSeasonalNotice = isItemVisible('dashboard', 'seasonal_weather', 'seasonalNotice');
+        const showWeatherCard = isItemVisible('dashboard', 'seasonal_weather', 'weatherCard');
+        const showWeatherActions = isItemVisible('dashboard', 'seasonal_weather', 'weatherActions');
+
+        if (!showSeasonalCard && !showWeatherCard) {
+          return (
+            <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              Both Seasonal Predictions and Weather Care cards are hidden. Use Customize to re-enable them.
+            </div>
+          );
+        }
+
+        const seasonalGridClass =
+          showSeasonalCard && showWeatherCard ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1';
+
+        return (
+          <div className={`grid ${seasonalGridClass} gap-6`}>
+            {/* Seasonal Predictions Card */}
+            {showSeasonalCard && (
+            <div className={`${showWeatherCard ? 'lg:col-span-2 ' : ''}p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-stone-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center">
+                    <Sun className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                      <span>Seasonal Egg Laying Prediction Model</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-normal">
+                        Biology-Based Estimate
+                      </span>
+                    </h3>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      Calculated from daylight length ({seasonalPrediction.daylightHours} hrs), hen ages, and feather molting cycles.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
+                    {seasonalPrediction.seasonName} Forecast
                   </span>
-                </h3>
-                <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Calculated from daylight length ({seasonalPrediction.daylightHours} hrs), hen ages, and feather molting cycles.
-                </p>
+                </div>
               </div>
-            </div>
 
-            <div className="text-right">
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
-                {seasonalPrediction.seasonName} Forecast
-              </span>
-            </div>
-          </div>
-
-          {/* Range cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Range cards */}
+              {showSeasonalRanges && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3.5 bg-stone-50 dark:bg-stone-800/80 rounded-xl border border-stone-200/80 dark:border-stone-700/80">
               <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 block uppercase">
                 Expected Daily Yield
@@ -932,8 +1014,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <p className="text-[11px] text-stone-400 mt-1">30-day estimated output</p>
             </div>
           </div>
+          )}
 
           {/* Biological factors breakdown */}
+          {showSeasonalModifiers && (
           <div className="space-y-2 pt-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 block">
               Prediction Biological Modifiers:
@@ -947,15 +1031,20 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               ))}
             </div>
           </div>
+          )}
 
           {/* Explicit label and disclaimer */}
+          {showSeasonalNotice && (
           <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
             <strong className="font-semibold block mb-0.5">Estimated Projection Notice:</strong>
             {seasonalPrediction.forecastNote}
           </div>
+          )}
         </div>
+        )}
 
         {/* Weather-Aware Flock Care Card */}
+        {showWeatherCard && (
         <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
@@ -972,6 +1061,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <h4 className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
                 {weatherAdvisory.title}
               </h4>
+              {showWeatherActions && (
               <ul className="space-y-2 text-xs text-stone-600 dark:text-stone-300">
                 {weatherAdvisory.actions.map((act, i) => (
                   <li key={i} className="flex items-start gap-2">
@@ -980,6 +1070,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   </li>
                 ))}
               </ul>
+              )}
             </div>
           </div>
 
@@ -992,12 +1083,40 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
         </div>
+        )}
       </div>
+        );
+      }
 
-      {/* 4. PRIMARY KPI ROW */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 */}
-        <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs transition-colors">
+      case 'kpis': {
+        const showTodayEggs = isItemVisible('dashboard', 'kpis', 'todayEggs');
+        const showMovingAvg = isItemVisible('dashboard', 'kpis', 'movingAvg7Day');
+        const showActiveLayers = isItemVisible('dashboard', 'kpis', 'activeLayers');
+        const showCoopUtil = isItemVisible('dashboard', 'kpis', 'coopUtilization');
+        const visibleKpiCount = [showTodayEggs, showMovingAvg, showActiveLayers, showCoopUtil].filter(Boolean).length;
+
+        if (visibleKpiCount === 0) {
+          return (
+            <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+              All primary KPI cards are hidden. Use Customize to re-enable metrics.
+            </div>
+          );
+        }
+
+        const kpiColsClass =
+          visibleKpiCount === 1
+            ? 'grid-cols-1'
+            : visibleKpiCount === 2
+            ? 'grid-cols-1 sm:grid-cols-2'
+            : visibleKpiCount === 3
+            ? 'grid-cols-1 sm:grid-cols-3'
+            : 'grid-cols-2 lg:grid-cols-4';
+
+        return (
+          <div className={`grid ${kpiColsClass} gap-4`}>
+            {/* Metric 1 */}
+            {showTodayEggs && (
+            <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs transition-colors">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Today's Eggs</span>
             <Egg className="w-4 h-4 text-amber-700 dark:text-amber-400" />
@@ -1015,8 +1134,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             <span>daily laying rate</span>
           </div>
         </div>
+        )}
 
         {/* Metric 2 */}
+        {showMovingAvg && (
         <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs transition-colors">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">7-Day Moving Avg</span>
@@ -1033,8 +1154,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             <span>total collected past 7 days</span>
           </div>
         </div>
+        )}
 
         {/* Metric 3 */}
+        {showActiveLayers && (
         <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs transition-colors">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Active Layers</span>
@@ -1053,8 +1176,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             <span>growing pullets & chicks</span>
           </div>
         </div>
+        )}
 
         {/* Metric 4 */}
+        {showCoopUtil && (
         <div className="p-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs transition-colors">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Coop Utilization</span>
@@ -1071,23 +1196,56 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             <span>coops in service</span>
           </div>
         </div>
+        )}
       </div>
+        );
+      }
 
-      {/* 5. DAILY EGG COUNTS BAR GRAPH */}
-      <DailyEggCountsBarGraph
-        eggLogs={eggLogs}
-        coops={coops}
-        chickens={chickens}
-        timezone={timezone}
-        onOpenLogEggs={onOpenLogEggs}
-        onEditLog={onEditEggLog}
-        onNavigateToEggsTab={() => onNavigateToTab('eggs')}
-      />
+      case 'egg_chart':
+        return (
+          <DailyEggCountsBarGraph
+            eggLogs={eggLogs}
+            coops={coops}
+            chickens={chickens}
+            timezone={timezone}
+            onOpenLogEggs={onOpenLogEggs}
+            onEditLog={onEditEggLog}
+            onNavigateToEggsTab={() => onNavigateToTab('eggs')}
+            showWindowAndFilters={isItemVisible('dashboard', 'egg_chart', 'windowAndFilters')}
+            showSummaryCards={isItemVisible('dashboard', 'egg_chart', 'summaryCards')}
+            showLegend={isItemVisible('dashboard', 'egg_chart', 'legend')}
+          />
+        );
 
-      {/* 6. COOP FACILITIES, RECENT COLLECTIONS & ACTIVE GROWTH */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Coops Overview */}
-        <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 flex flex-col justify-between transition-colors">
+      case 'homestead_cards': {
+        const showCoopStatus = isItemVisible('dashboard', 'homestead_cards', 'coopStatusCard');
+        const showCoopOccupancyBars = isItemVisible('dashboard', 'homestead_cards', 'coopOccupancyBars');
+        const showRecentCollections = isItemVisible('dashboard', 'homestead_cards', 'recentCollectionsCard');
+        const showRecentEggVisuals = isItemVisible('dashboard', 'homestead_cards', 'recentEggVisuals');
+        const showGrowthTracking = isItemVisible('dashboard', 'homestead_cards', 'growthTrackingCard');
+        const showGrowthWeightGain = isItemVisible('dashboard', 'homestead_cards', 'growthWeightGain');
+
+        const visibleBottomCount = [showCoopStatus, showRecentCollections, showGrowthTracking].filter(Boolean).length;
+        if (visibleBottomCount === 0) {
+          return (
+            <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              All homestead summary cards are hidden. Use Customize to re-enable Coops, Collections, or Growth cards.
+            </div>
+          );
+        }
+
+        const bottomColsClass =
+          visibleBottomCount === 1
+            ? 'grid-cols-1'
+            : visibleBottomCount === 2
+            ? 'grid-cols-1 lg:grid-cols-2'
+            : 'grid-cols-1 lg:grid-cols-3';
+
+        return (
+          <div className={`grid ${bottomColsClass} gap-6`}>
+            {/* Quick Coops Overview */}
+            {showCoopStatus && (
+            <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 flex flex-col justify-between transition-colors">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">Coop Facility Status</h2>
@@ -1134,6 +1292,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                         </span>
                       </div>
 
+                      {showCoopOccupancyBars && (
                       <div className="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
@@ -1143,6 +1302,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                           }}
                         />
                       </div>
+                      )}
 
                       <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 pt-0.5">
                         <span>{coop.nestingBoxes} nest boxes · {coop.beddingType}</span>
@@ -1164,8 +1324,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
         </div>
+        )}
 
         {/* Recent Collections */}
+        {showRecentCollections && (
         <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -1201,6 +1363,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                             <span className="text-[10px] text-stone-400">·</span>
                             <span className="text-[11px] text-stone-500 dark:text-stone-400">{log.date}</span>
                           </div>
+                          {showRecentEggVisuals && (
                           <div className="flex items-center gap-1 mt-0.5">
                             {log.eggs.slice(0, 4).map((egg) => (
                               <EggVisual key={egg.id} color={egg.color} shape={egg.shape} size={egg.size} className="w-3.5 h-4.5" />
@@ -1209,6 +1372,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                               <span className="text-[9px] text-stone-400 font-mono">+{log.eggs.length - 4}</span>
                             )}
                           </div>
+                          )}
                         </div>
                       </div>
 
@@ -1249,8 +1413,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
         </div>
+        )}
 
         {/* Active Growth Monitoring */}
+        {showGrowthTracking && (
         <div className="p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xs space-y-4 transition-colors flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -1302,13 +1468,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                           <span className="font-mono text-xs font-bold text-stone-900 dark:text-stone-100 tabular-nums">
                             {latestWeight.weightGrams}g
                           </span>
-                          <span className="text-[10px] text-stone-500 dark:text-stone-400 ml-1">
-                            ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
-                          </span>
-                          {gain > 0 && (
-                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
-                              +{gain}g gained
-                            </p>
+                          {showGrowthWeightGain && (
+                            <>
+                              <span className="text-[10px] text-stone-500 dark:text-stone-400 ml-1">
+                                ({Math.round((latestWeight.weightGrams / 453.6) * 10) / 10} lbs)
+                              </span>
+                              {gain > 0 && (
+                                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono font-medium">
+                                  +{gain}g gained
+                                </p>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -1327,7 +1497,35 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
           </div>
         </div>
+        )}
       </div>
+        );
+      }
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-200 dark:border-stone-800">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
+            Homestead Overview
+          </h2>
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            Daily production pulse, chores, weather care, and customizable section layout.
+          </p>
+        </div>
+        <TabCustomizeControls tabId="dashboard" />
+      </div>
+
+      <CustomizableSectionList
+        tabId="dashboard"
+        className="space-y-8"
+        renderSection={renderSection}
+      />
     </div>
   );
 };

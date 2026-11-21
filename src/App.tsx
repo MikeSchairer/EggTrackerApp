@@ -20,11 +20,13 @@ import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
 import { TimeZoneModal } from './components/TimeZoneModal';
 import { MobileSplashPage } from './components/MobileSplashPage';
+import { TabCustomizeModal } from './components/TabCustomizeModal';
 import { Egg } from 'lucide-react';
 import { getTimeZone, setTimeZone, getTodayDateStr } from './utils/dateUtils';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CustomizationProvider } from './context/CustomizationContext';
 import { loadFlockState, saveFlockState, resetToSampleData, clearAllFlockData, exportBackupJson } from './utils/storage';
 import { fetchUserFlockData, saveUserFlockData } from './services/flockSyncService';
 import { 
@@ -74,6 +76,18 @@ function FlockAppContent() {
       return updated;
     });
   };
+
+  const handleSyncCustomization = React.useCallback((nextCustomization: FlockState['tabCustomization']) => {
+    setState(prev => {
+      if (JSON.stringify(prev.tabCustomization) === JSON.stringify(nextCustomization)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        tabCustomization: nextCustomization,
+      };
+    });
+  }, []);
 
   // Cloud sync flag
   const isCloudLoadedRef = useRef<boolean>(false);
@@ -452,6 +466,10 @@ function FlockAppContent() {
   }
 
   return (
+    <CustomizationProvider
+      externalCustomization={state.tabCustomization}
+      onSyncCustomization={handleSyncCustomization}
+    >
     <div className="min-h-screen flex flex-col bg-[var(--theme-bg-canvas)] dark:bg-stone-950 text-stone-900 dark:text-stone-100 selection:bg-amber-200 selection:text-amber-950 font-sans transition-colors duration-200 overflow-x-hidden w-full max-w-full">
       {/* Mobile Home Screen Standalone Splash Page */}
       <MobileSplashPage />
@@ -684,7 +702,10 @@ function FlockAppContent() {
           onSaveTimeZone={handleSaveTimeZone}
         />
       )}
+
+      <TabCustomizeModal />
     </div>
+    </CustomizationProvider>
   );
 }
 

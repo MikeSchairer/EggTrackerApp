@@ -7,6 +7,8 @@ import { calculateChickenAge } from '../../utils/flockCalculations';
 import { GrowthWeighInModal } from '../GrowthWeighInModal';
 import { ChickenQrModal } from '../ChickenQrModal';
 import { ChickenAvatar } from '../ChickenAvatar';
+import { useCustomization } from '../../context/CustomizationContext';
+import { TabCustomizeControls, CustomizableSectionList } from '../TabCustomizeBar';
 
 interface FlockTabProps {
   coops: Coop[];
@@ -29,6 +31,7 @@ export const FlockTab: React.FC<FlockTabProps> = ({
   onSaveWeight,
   onTransferChicken,
 }) => {
+  const { isItemVisible } = useCustomization();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCoopFilter, setSelectedCoopFilter] = useState<string>('all');
   const [selectedBreedFilter, setSelectedBreedFilter] = useState<string>('all');
@@ -86,120 +89,142 @@ export const FlockTab: React.FC<FlockTabProps> = ({
     ? eggLogs.reduce((sum, log) => sum + log.eggs.filter(e => e.chickenId === activeBird.id).length, 0)
     : 0;
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-200 dark:border-stone-800">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">Flock Inventory & Growth Tracking</h1>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-            Monitor weight trajectories, age milestones, breed standards, and housing across the flock.
-          </p>
-        </div>
+  const showSearchBox = isItemVisible('flock', 'filters', 'searchBox');
+  const showCoopFilter = isItemVisible('flock', 'filters', 'coopFilter');
+  const showBreedFilter = isItemVisible('flock', 'filters', 'breedFilter');
+  const showStageFilter = isItemVisible('flock', 'filters', 'stageFilter');
+  const showStatusFilter = isItemVisible('flock', 'filters', 'statusFilter');
+  const showCountSummary = isItemVisible('flock', 'filters', 'countSummary');
 
-        <button
-          onClick={onOpenAddChicken}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs transition-colors whitespace-nowrap self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Register New Bird</span>
-        </button>
-      </div>
+  const showBirdAvatars = isItemVisible('flock', 'roster_and_dossier', 'birdAvatars');
+  const showLegBandId = isItemVisible('flock', 'roster_and_dossier', 'legBandId');
+  const showEggColorText = isItemVisible('flock', 'roster_and_dossier', 'eggColorText');
+  const showCoopAndWeightRow = isItemVisible('flock', 'roster_and_dossier', 'coopAndWeightRow');
+  const showQrButton = isItemVisible('flock', 'roster_and_dossier', 'qrButton');
+  const showDossierPanel = isItemVisible('flock', 'roster_and_dossier', 'dossierPanel');
+  const showDossierQuickSpecs = isItemVisible('flock', 'roster_and_dossier', 'dossierQuickSpecs');
+  const showCoopTransfer = isItemVisible('flock', 'roster_and_dossier', 'coopTransfer');
+  const showGrowthMilestones = isItemVisible('flock', 'roster_and_dossier', 'growthMilestones');
+  const showWeighInHistory = isItemVisible('flock', 'roster_and_dossier', 'weighInHistory');
+  const showManagerNotes = isItemVisible('flock', 'roster_and_dossier', 'managerNotes');
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by name or band ID..."
-              className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md pl-8 pr-3 py-1.5 text-xs text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500"
-            />
+  const renderSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'filters': {
+        const visibleFilterCount = [showSearchBox, showCoopFilter, showBreedFilter, showStageFilter, showStatusFilter].filter(Boolean).length;
+        if (visibleFilterCount === 0 && !showCountSummary) {
+          return (
+            <div className="p-4 text-xs text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl">
+              All search and filter controls are hidden. Use Customize to re-enable them.
+            </div>
+          );
+        }
+        return (
+          <div className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xs space-y-3">
+            {visibleFilterCount > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                {showSearchBox && (
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search by name or band ID..."
+                      className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md pl-8 pr-3 py-1.5 text-xs text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500"
+                    />
+                  </div>
+                )}
+
+                {showCoopFilter && (
+                  <select
+                    value={selectedCoopFilter}
+                    onChange={e => setSelectedCoopFilter(e.target.value)}
+                    className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
+                  >
+                    <option value="all">All Coops ({coops.length})</option>
+                    {coops.map(coop => (
+                      <option key={coop.id} value={coop.id}>{coop.name}</option>
+                    ))}
+                  </select>
+                )}
+
+                {showBreedFilter && (
+                  <select
+                    value={selectedBreedFilter}
+                    onChange={e => setSelectedBreedFilter(e.target.value)}
+                    className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
+                  >
+                    <option value="all">All Breeds</option>
+                    {CHICKEN_BREEDS.map(breed => (
+                      <option key={breed.id} value={breed.id}>{breed.name}</option>
+                    ))}
+                  </select>
+                )}
+
+                {showStageFilter && (
+                  <select
+                    value={selectedStageFilter}
+                    onChange={e => setSelectedStageFilter(e.target.value)}
+                    className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
+                  >
+                    <option value="all">All Life Stages</option>
+                    <option value="chick">Chicks</option>
+                    <option value="pullet">Pullets / Juveniles</option>
+                    <option value="point_of_lay">Point of Lay</option>
+                    <option value="active_layer">Active Layers</option>
+                    <option value="broody">Broody</option>
+                    <option value="molting">Molting</option>
+                    <option value="retired">Retired</option>
+                  </select>
+                )}
+
+                {showStatusFilter && (
+                  <select
+                    value={selectedStatusFilter}
+                    onChange={e => setSelectedStatusFilter(e.target.value)}
+                    className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium col-span-1 sm:col-span-2 lg:col-span-4"
+                  >
+                    <option value="all">All Flock Statuses</option>
+                    <option value="active">Active Members Only</option>
+                    <option value="deceased">Deceased</option>
+                    <option value="sold">Sold</option>
+                    <option value="rehomed">Rehomed</option>
+                  </select>
+                )}
+              </div>
+            )}
+
+            {showCountSummary && (
+              <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 pt-1 border-t border-stone-100 dark:border-stone-800">
+                <span>
+                  Showing <strong className="text-stone-900 dark:text-stone-100 font-mono">{filteredChickens.length}</strong> of {chickens.length} birds
+                </span>
+                {(searchQuery || selectedCoopFilter !== 'all' || selectedBreedFilter !== 'all' || selectedStageFilter !== 'all' || selectedStatusFilter !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCoopFilter('all');
+                      setSelectedBreedFilter('all');
+                      setSelectedStageFilter('all');
+                      setSelectedStatusFilter('all');
+                    }}
+                    className="text-amber-800 dark:text-amber-400 hover:underline font-semibold cursor-pointer"
+                  >
+                    Reset filters
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+        );
+      }
 
-          {/* Coop filter */}
-          <select
-            value={selectedCoopFilter}
-            onChange={e => setSelectedCoopFilter(e.target.value)}
-            className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
-          >
-            <option value="all">All Coops ({coops.length})</option>
-            {coops.map(coop => (
-              <option key={coop.id} value={coop.id}>{coop.name}</option>
-            ))}
-          </select>
-
-          {/* Breed filter */}
-          <select
-            value={selectedBreedFilter}
-            onChange={e => setSelectedBreedFilter(e.target.value)}
-            className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
-          >
-            <option value="all">All Breeds</option>
-            {CHICKEN_BREEDS.map(breed => (
-              <option key={breed.id} value={breed.id}>{breed.name}</option>
-            ))}
-          </select>
-
-          {/* Life stage filter */}
-          <select
-            value={selectedStageFilter}
-            onChange={e => setSelectedStageFilter(e.target.value)}
-            className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium"
-          >
-            <option value="all">All Life Stages</option>
-            <option value="chick">Chicks</option>
-            <option value="pullet">Pullets / Juveniles</option>
-            <option value="point_of_lay">Point of Lay</option>
-            <option value="active_layer">Active Layers</option>
-            <option value="broody">Broody</option>
-            <option value="molting">Molting</option>
-            <option value="retired">Retired</option>
-          </select>
-
-          {/* Status filter */}
-          <select
-            value={selectedStatusFilter}
-            onChange={e => setSelectedStatusFilter(e.target.value)}
-            className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 text-xs text-stone-800 dark:text-stone-200 font-medium col-span-1 sm:col-span-2 lg:col-span-4"
-          >
-            <option value="all">All Flock Statuses</option>
-            <option value="active">Active Members Only</option>
-            <option value="deceased">Deceased</option>
-            <option value="sold">Sold</option>
-            <option value="rehomed">Rehomed</option>
-          </select>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 pt-1 border-t border-stone-100 dark:border-stone-800">
-          <span>
-            Showing <strong className="text-stone-900 dark:text-stone-100 font-mono">{filteredChickens.length}</strong> of {chickens.length} birds
-          </span>
-          {(searchQuery || selectedCoopFilter !== 'all' || selectedBreedFilter !== 'all' || selectedStageFilter !== 'all' || selectedStatusFilter !== 'all') && (
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCoopFilter('all');
-                setSelectedBreedFilter('all');
-                setSelectedStageFilter('all');
-                setSelectedStatusFilter('all');
-              }}
-              className="text-amber-800 dark:text-amber-400 hover:underline font-semibold"
-            >
-              Reset filters
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Split: Left list of birds / Right detailed growth profile */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Chicken Cards List (5 cols) */}
-        <div className="lg:col-span-5 space-y-3 min-w-0">
+      case 'roster_and_dossier':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left: Chicken Cards List */}
+            <div className={`${showDossierPanel ? 'lg:col-span-5 space-y-3' : 'lg:col-span-12 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3'} min-w-0`}>
           {filteredChickens.length === 0 ? (
             <div className="p-8 text-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl space-y-2">
               <p className="text-xs font-semibold text-stone-700 dark:text-stone-300">No chickens registered yet.</p>
@@ -234,15 +259,17 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <ChickenAvatar
-                        chicken={chicken}
-                        className="w-12 h-12 rounded-xl ring-1 ring-black/10 dark:ring-white/20"
-                      />
+                      {showBirdAvatars && (
+                        <ChickenAvatar
+                          chicken={chicken}
+                          className="w-12 h-12 rounded-xl ring-1 ring-black/10 dark:ring-white/20"
+                        />
+                      )}
 
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 item-title">{chicken.name}</h3>
-                          {chicken.legBandId && (
+                          {showLegBandId && chicken.legBandId && (
                             <span className="text-[10px] font-mono font-medium bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded-sm border border-stone-200/80 dark:border-stone-700">
                               {chicken.legBandId}
                             </span>
@@ -255,7 +282,7 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                         </div>
                         <p className="text-xs text-stone-600 dark:text-stone-400 font-medium item-subtext">
                           {breed?.name || 'Heritage Bird'} · <span className="capitalize">{chicken.gender}</span> · <span className="text-amber-800 dark:text-amber-400 font-semibold">{age.text}</span>
-                          {chicken.gender === 'hen' && (
+                          {showEggColorText && chicken.gender === 'hen' && (
                             <span className="text-stone-500 dark:text-stone-400">
                               {' '}· {chicken.defaultEggColor ? (EGG_COLORS.find(c => c.id === chicken.defaultEggColor)?.label || breed?.eggColorDisplay) : breed?.eggColorDisplay}
                             </span>
@@ -264,51 +291,59 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                       </div>
                     </div>
 
-                    <ChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-amber-700 dark:text-amber-400 translate-x-0.5' : 'text-stone-300 dark:text-stone-600'}`} />
+                    {showDossierPanel && (
+                      <ChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-amber-700 dark:text-amber-400 translate-x-0.5' : 'text-stone-300 dark:text-stone-600'}`} />
+                    )}
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between gap-2 text-xs text-stone-500 dark:text-stone-400">
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="truncate max-w-[120px] text-stone-600 dark:text-stone-300">{coop?.name || 'Coop'}</span>
-                      <span>·</span>
-                      <strong className="text-stone-800 dark:text-stone-200 font-mono tabular-nums">{weight ? `${weight}g` : '—'}</strong>
-                    </div>
+                  {(showCoopAndWeightRow || showQrButton || showDossierPanel) && (
+                    <div className="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between gap-2 text-xs text-stone-500 dark:text-stone-400">
+                      {showCoopAndWeightRow ? (
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="truncate max-w-[120px] text-stone-600 dark:text-stone-300">{coop?.name || 'Coop'}</span>
+                          <span>·</span>
+                          <strong className="text-stone-800 dark:text-stone-200 font-mono tabular-nums">{weight ? `${weight}g` : '—'}</strong>
+                        </div>
+                      ) : <div />}
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {/* QR Badge Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setQrChicken(chicken);
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 transition-colors"
-                        title={`View & Print ${chicken.name}'s QR Code Badge`}
-                      >
-                        <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                        <span>QR</span>
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {showQrButton && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQrChicken(chicken);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 transition-colors cursor-pointer"
+                            title={`View & Print ${chicken.name}'s QR Code Badge`}
+                          >
+                            <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                            <span>QR</span>
+                          </button>
+                        )}
 
-                      {/* Prominent Jump to Details Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectAndJump(chicken);
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 ${
-                          isSelected
-                            ? 'bg-amber-700 dark:bg-amber-500 text-white dark:text-stone-950 font-bold shadow-xs'
-                            : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700'
-                        }`}
-                        title={`Jump to ${chicken.name}'s details dossier`}
-                      >
-                        <span>Details</span>
-                        <ArrowDown className="w-3.5 h-3.5 lg:hidden" />
-                        <ChevronRight className="w-3.5 h-3.5 hidden lg:inline" />
-                      </button>
+                        {showDossierPanel && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectAndJump(chicken);
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
+                              isSelected
+                                ? 'bg-amber-700 dark:bg-amber-500 text-white dark:text-stone-950 font-bold shadow-xs'
+                                : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700'
+                            }`}
+                            title={`Jump to ${chicken.name}'s details dossier`}
+                          >
+                            <span>Details</span>
+                            <ArrowDown className="w-3.5 h-3.5 lg:hidden" />
+                            <ChevronRight className="w-3.5 h-3.5 hidden lg:inline" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })
@@ -316,8 +351,9 @@ export const FlockTab: React.FC<FlockTabProps> = ({
         </div>
 
         {/* Right: Detailed Bird Dossier & Growth Analytics (7 cols) */}
-        <div 
-          ref={detailsSectionRef} 
+        {showDossierPanel && (
+        <div
+          ref={detailsSectionRef}
           className={`lg:col-span-7 min-w-0 scroll-mt-24 transition-all duration-300 ${
             highlightDetails ? 'ring-2 ring-amber-500 rounded-2xl shadow-xl' : ''
           }`}
@@ -327,10 +363,12 @@ export const FlockTab: React.FC<FlockTabProps> = ({
               {/* Header Dossier */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200 dark:border-stone-800">
                 <div className="flex items-center gap-4">
-                  <ChickenAvatar
-                    chicken={activeBird}
-                    className="w-16 h-16 rounded-2xl ring-2 ring-amber-500/40 shadow-sm"
-                  />
+                  {showBirdAvatars && (
+                    <ChickenAvatar
+                      chicken={activeBird}
+                      className="w-16 h-16 rounded-2xl ring-2 ring-amber-500/40 shadow-sm"
+                    />
+                  )}
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">{activeBird.name}</h2>
@@ -345,14 +383,16 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <button
-                    onClick={() => setQrChicken(activeBird)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-200/80 dark:border-stone-700 rounded-lg shadow-xs transition-colors"
-                    title="View and print QR ID Badge"
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>QR Badge</span>
-                  </button>
+                  {showQrButton && (
+                    <button
+                      onClick={() => setQrChicken(activeBird)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-200/80 dark:border-stone-700 rounded-lg shadow-xs transition-colors cursor-pointer"
+                      title="View and print QR ID Badge"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                      <span>QR Badge</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setIsWeighInOpen(true)}
@@ -386,6 +426,7 @@ export const FlockTab: React.FC<FlockTabProps> = ({
               </div>
 
               {/* Quick Spec Metrics Grid */}
+              {showDossierQuickSpecs && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 bg-stone-50 dark:bg-stone-800/80 rounded-xl border border-stone-200/80 dark:border-stone-700/80">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 block uppercase tracking-wider">Current Age</span>
@@ -423,8 +464,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                   <span className="text-[10px] text-stone-500 dark:text-stone-400 block mt-0.5">individual logs</span>
                 </div>
               </div>
+              )}
 
               {/* Coop Relocation Controller */}
+              {showCoopTransfer && (
               <div className="p-3.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200/80 dark:border-stone-700/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-3">
                 <div className="flex items-center gap-2">
                   <ArrowRightLeft className="w-4 h-4 text-stone-500 dark:text-stone-400 shrink-0" />
@@ -447,8 +490,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                   </select>
                 </div>
               </div>
+              )}
 
               {/* Growth Curve Comparison against Breed Standard */}
+              {showGrowthMilestones && (
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
@@ -525,8 +570,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                   })}
                 </div>
               </div>
+              )}
 
               {/* Weigh-In History Ledger Table */}
+              {showWeighInHistory && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
@@ -576,9 +623,10 @@ export const FlockTab: React.FC<FlockTabProps> = ({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Bird Notes */}
-              {activeBird.notes && (
+              {showManagerNotes && activeBird.notes && (
                 <div className="p-4 bg-amber-50/80 dark:bg-stone-800/80 border border-amber-200 dark:border-amber-700/60 rounded-xl text-xs space-y-1">
                   <strong className="block text-amber-900 dark:text-amber-300 font-bold uppercase tracking-wider text-[11px]">Manager Notes:</strong>
                   <p className="leading-relaxed text-amber-950 dark:text-stone-200">{activeBird.notes}</p>
@@ -592,7 +640,39 @@ export const FlockTab: React.FC<FlockTabProps> = ({
             </div>
           )}
         </div>
+        )}
       </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-200 dark:border-stone-800">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">Flock Inventory & Growth Tracking</h1>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            Monitor weight trajectories, age milestones, breed standards, and housing across the flock.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          <TabCustomizeControls tabId="flock" />
+          <button
+            onClick={onOpenAddChicken}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow-xs transition-colors whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Register New Bird</span>
+          </button>
+        </div>
+      </div>
+
+      <CustomizableSectionList tabId="flock" renderSection={renderSection} />
 
       {/* Weigh-In Modal */}
       {isWeighInOpen && activeBird && (
